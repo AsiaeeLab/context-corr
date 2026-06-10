@@ -1,0 +1,178 @@
+---
+title: "TCGA Cohorts"
+author: "Kevin R. Coombes"
+date: "8 August 2018"
+output: 
+  html_document:
+    toc: true
+    highlight: kate
+    theme: yeti
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width = 80)
+```
+```{r mycss, results="asis", echo=FALSE}
+cat('
+<style type="text/css">
+b, strong {color: red; }
+i, em {color: blue; }
+.defn {color: purple; }
+.para {color: purple;
+      font-weight: bold;
+}
+.figure { text-align: center; }
+.caption { font-weight: bold; }
+</style>
+')
+```
+
+# Background
+The Cancer Genome Atlas (TCGA) divides the data by cancer type, which is referred to
+at most of the relevant web sites (or data sources) as a "_cohort_". The goal of this
+report is simply to get a list of those cohorts.
+
+# Cohorts
+First, we define the paths that we will use to store things.
+```{r paths}
+source("00-paths.R")
+```
+
+Next, we define a function to fetch and parse JSON data from the Firebrowse web site.
+```{r fetch}
+# get the list of cohorts
+library(rjson)
+fetch <- function(myurl) {
+  stuff <- paste(readLines(myurl), collapse='')
+  if (stuff=="") return(NULL)
+  struct <- fromJSON(stuff)
+  length(struct)
+  names(struct)
+  gunk <- struct[[1]]
+  NR <- length(gunk)
+  NC <- length(gunk[[1]])
+  daft <- matrix("", nrow=NR, ncol=NC)
+  for (i in 1:NR) {
+    for (j in 1:NC) {
+      x <- gunk[[i]][[j]]
+      daft[i,j] <- ifelse(is.null(x), NA, x)
+    }
+  }
+  colnames(daft) <- names(gunk[[1]])
+  daft <- as.data.frame(daft)
+  daft
+}
+```
+
+Now we can actually go get the data.
+```{r}
+myurl <- "http://firebrowse.org/api/v1/Metadata/Cohorts?format=json"
+cohorts <- fetch(myurl)
+rm(myurl)
+cohorts
+```
+Notice that we get both the short acronym as well as the longer description of
+each cancer type.
+
+# Color Schemes
+Next, we define a reusable palette of colors to distinguish cancer types in plots.
+```{r colors, fig.cap = "Reusable cohort color palette.", fig.width=9}
+library(Polychrome)
+p36 <- palette36.colors(36)
+pal <- createPalette(38, p36[3:35])
+dontUse <- c("FPPP", "COADREAD", "GBMLGG", "KIPAN", "STES")
+cohortColors <- rep(NA, nrow(cohorts))
+cohortColors[!(cohorts$cohort %in% dontUse)] <- pal[1:33]
+cohortColors[(cohorts$cohort %in% dontUse)] <- pal[34:38]
+names(cohortColors) <- as.character(cohorts$cohort)
+swatch(cohortColors)
+```
+
+# Case and File Counts
+The API at the GDC also allows us to get a list of the numbver of cases and files that
+we expect using different technologies. We need t make separate calls for each cohort.
+The following function implements the API call.
+
+```{r gdcMeta}
+library(rjson)
+gdcMeta <- function(COHORT) {
+  url <- paste("https://api.gdc.cancer.gov/projects/TCGA-",
+               COHORT,
+               "?expand=summary,summary.experimental_strategies",
+             sep ='')
+  stuff <- paste(readLines(url, warn = FALSE), collapse = '')
+  thing <- fromJSON(stuff)
+  ss <- thing$data$summary
+  tot <- data.frame(case_count = ss$case_count,
+                    file_count = ss$file_count,
+                    experimental_strategy = "All")
+  es <- ss$experimental_strategies
+  nms <- names(es[[1]])
+  extract <- lapply(nms, function(N) { unlist(lapply(es, function(X) { X[N] })) })
+  daft <- as.data.frame(extract)
+  colnames(daft) <- nms
+  daft <- rbind(tot, daft)
+  daft$Cohort <- COHORT
+  daft
+}
+```
+Now we can fetch all the metadata.
+```{r tcgameta}
+tumorlist <- as.character(cohorts$cohort)
+tumorlist <- tumorlist[!(tumorlist %in% dontUse)]
+for (tumor in tumorlist) {
+  temp <- gdcMeta(tumor)
+  if (exists("tcgaMeta")) {
+    tcgaMeta <- rbind(tcgaMeta, temp)
+  } else {
+    tcgaMeta <- temp
+  }
+}
+tcgaMeta$Cohort <- factor(tcgaMeta$Cohort)
+summary(tcgaMeta)
+```
+Here is an overview of the total number of cases and files.
+```{r over}
+tcgaMeta[tcgaMeta$experimental_strategy == "All", ]
+```
+
+```{r idLists}
+ids <- function(COHORT) {
+  url <- paste("https://api.gdc.cancer.gov/cases?fields=submitter_id&filters=",
+               "%7B%22op%22:%22=%22,%22content%22:%7B%22field%22:%22",
+               "project.project_id%22,%22value%22:%5B%22TCGA-",
+               COHORT,
+               "%22%5D%7D%7D&size=1200",
+               sep="")
+  stuff <- paste(readLines(url, warn=FALSE), collapse="")
+  whatever <- fromJSON(stuff)
+  d <- whatever$data$hits
+  unlist(lapply(d, function(x) {x$submitter_id}))
+}
+
+for (tumor in tumorlist) {
+  tempID <- ids(tumor)
+  daft <- data.frame(ID = tempID, cancerType = tumor)
+  if (exists("idLists")) {
+    idLists <- rbind(idLists, daft)
+  } else {
+    idLists <- daft
+  }
+}
+```
+
+# Finishing Up
+Finally, we save the results for reuse in later analyses.
+```{r save}
+save(cohorts, cohortColors, tcgaMeta, idLists, 
+     file = file.path(tcgapaths$clean, "cohorts.Rda"))
+```
+
+# Appendix
+It's always a good idea to finish up by reporting which versions of the
+software tools were used for this analysis:
+```{r si}
+sessionInfo()
+```
+

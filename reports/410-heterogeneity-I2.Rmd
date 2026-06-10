@@ -1,0 +1,66 @@
+---
+title: "Standard heterogeneity reporting: Cochran’s Q, I², and FDR"
+author: "Amir (major revision; toolkit framing)"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    highlight: kate
+    theme: yeti
+---
+
+```{r sigh, echo=FALSE}
+source("00-paths.R")
+figdir <- file.path(paths$results, "Figures")
+if (!dir.exists(figdir)) dir.create(figdir, recursive = TRUE)
+rm(paths)
+```
+
+```{r mycss, results="asis", echo=FALSE}
+cat('
+<style type="text/css">
+b, strong {color: red; }
+i, em {color: blue; }
+.defn {color: purple; }
+.para {color: purple;
+      font-weight: bold;
+}
+.figure { text-align: center; }
+.caption { font-weight: bold; }
+</style>
+')
+```
+
+# Summary
+We replace the old, nonstandard “χ²=60/100 bins” with standard meta-analysis reporting:
+
+- Cochran’s **Q** p-value
+- **I²** (fraction of variability due to true heterogeneity)
+- **BH-FDR** across the tested domain
+
+We compute these on the same high-variance domain used for robustness:
+top 5,000 genes × top 200 miRNAs = 1,000,000 pairs.
+
+Key headline used in the manuscript:
+
+- median **I² ≈ 0.86** (IQR ≈ 0.80–0.90)
+- **~99.5%** of pairs show heterogeneity at FDR < 0.05
+
+# Why this analysis
+Rationale: fixed χ² cutoffs are not comparable across varying degrees of freedom and are not standard in meta-analysis. Q/I² are standard and interpretable.
+
+# Run the heterogeneity script
+Rationale: compute and cache Q/I²/FDR summaries + write a manuscript-ready figure.
+```{r run, message=TRUE}
+system("Rscript scripts/heterogeneity_I2_FDR.R", intern = FALSE)
+```
+
+# Inspect the summary table
+Rationale: confirm the reported median I² and FDR fraction.
+```{r inspect}
+summ <- read.csv("results/heterogeneity_summary.csv")
+summ
+```
+
+Interpretation: heterogeneity is not a niche phenomenon; it is widespread and large even after focusing on a tractable but signal-rich domain.
+

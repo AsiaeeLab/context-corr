@@ -1,0 +1,29 @@
+# R session/build artifacts
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+*.Rcheck/
+
+# rmarkdown caches and intermediate files
+*_cache/
+*_files/
+
+# Local R environment
+renv/library
+renv/local
+renv/staging
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Large local data and full caches that aren't part of the shipped release
+*.Rda
+*.rda
+data/raw/
+
+# Anything explicitly excluded for size
+results/cache/brca_subtype_PAM50.rds
+results/cache/brca_subtype_IHC.rds
+results/cache/robustness_signflip.rds

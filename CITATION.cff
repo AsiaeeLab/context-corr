@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the accompanying paper."
+title: "context-corr: code for 'Context-dependent correlations mislead transcriptomic network inference in bulk and single-cell data'"
+authors:
+  - family-names: Asiaee
+    given-names: Amir
+    affiliation: "Vanderbilt University Medical Center"
+  - family-names: Bombina
+    given-names: Polina
+    affiliation: "Georgia Cancer Center at Augusta University"
+  - family-names: McGee II
+    given-names: Reginald L.
+    affiliation: "Haverford College"
+  - family-names: Reed
+    given-names: Jake
+    affiliation: "Huntsman Cancer Institute"
+  - family-names: Abrams
+    given-names: Zachary B.
+    affiliation: "Washington University"
+  - family-names: Abruzzo
+    given-names: Lynne V.
+    affiliation: "Medical University of South Carolina"
+  - family-names: Coombes
+    given-names: Kevin R.
+    affiliation: "Georgia Cancer Center at Augusta University"
+license: MIT
+repository-code: "https://github.com/AsiaeeLab/context-corr"
+preferred-citation:
+  type: article
+  title: "Context-dependent correlations mislead transcriptomic network inference in bulk and single-cell data"
+  authors:
+    - family-names: Asiaee
+      given-names: Amir
+    - family-names: Bombina
+      given-names: Polina
+    - family-names: McGee II
+      given-names: Reginald L.
+    - family-names: Reed
+      given-names: Jake
+    - family-names: Abrams
+      given-names: Zachary B.
+    - family-names: Abruzzo
+      given-names: Lynne V.
+    - family-names: Coombes
+      given-names: Kevin R.
+  journal: "Genome Biology"
+  year: 2026

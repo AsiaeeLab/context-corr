@@ -1,0 +1,437 @@
+---
+title: "Publication-Quality Visualizations for Context-Dependent Correlation"
+author: "Amir (Building on Kevin R. Coombes' framework)"
+date: "Original: `r Sys.Date()`; Latest Run: `r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    highlight: kate
+    theme: yeti
+---
+
+```{r sigh, echo=FALSE}
+source("00-paths.R")
+figdir <- file.path(paths$results, "Figures")
+if (!dir.exists(figdir)) dir.create(figdir, recursive = TRUE)
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=7, fig.height=5, dev = "png",
+                      fig.path = file.path(figdir, "R403"))
+options(width=96)
+.format <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+if (is.null(.format)) .format <- "broken"
+.figger <- function(N, cap ) ifelse(.format != "latex",
+                                 paste("Figure", N, ":",  cap),
+                                 cap)
+.taboo <- function(N, cap ) ifelse(.format %in% c("html", "docx"),
+                                 paste("Table ", N, ": ",  cap, sep = ""),
+                                 cap)
+```
+```{r mycss, results="asis", echo=FALSE}
+cat('
+<style type="text/css">
+b, strong {color: red; }
+i, em {color: blue; }
+.defn {color: purple; }
+.para {color: purple;
+      font-weight: bold;
+}
+.figure { text-align: center; }
+.caption { font-weight: bold; }
+</style>
+')
+```
+
+# Summary
+
+**Goal**: Create publication-quality visualizations that summarize the key findings
+from our analyses (401 and 402). These figures are designed to complement Kevin's
+manuscript and could potentially be included as additional figures.
+
+**Key visualizations:**
+1. Summary figure showing the overwhelming prevalence of context-dependence
+2. Known target correlation heatmap across cancers
+3. Cancer type similarity network based on miR correlation patterns
+4. "Flip" visualization showing genes with opposite correlation in different cancers
+
+# Setup
+
+```{r paths, message=FALSE, warning=FALSE}
+source("00-paths.R")
+
+library(ggplot2)
+library(pheatmap)
+library(RColorBrewer)
+library(reshape2)
+
+# Custom theme for publication
+theme_pub <- theme_classic() +
+  theme(
+    text = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.position = "right"
+  )
+```
+
+```{r loaddata}
+load(file.path(paths$mirtcga, "matchedNoGBM.rda"))
+load(file.path(paths$mirtcga, "cohortColors.Rda"))
+```
+
+```{r utilities}
+# Reuse correlation functions
+compute_mir_matrix <- function(mir_name, mRNAdata, miRdata, cancerType) {
+  cohorts <- sort(unique(as.character(cancerType)))
+  result <- matrix(NA, nrow = nrow(mRNAdata), ncol = length(cohorts),
+                   dimnames = list(rownames(mRNAdata), cohorts))
+
+  for (ct in cohorts) {
+    idx <- cancerType == ct
+    if (sum(idx) < 10) next
+    mir_expr <- as.numeric(miRdata[mir_name, idx])
+    if (all(mir_expr == 0) || sd(mir_expr) == 0) next
+    for (gene in rownames(mRNAdata)) {
+      mrna_expr <- as.numeric(mRNAdata[gene, idx])
+      if (sd(mrna_expr) > 0) {
+        result[gene, ct] <- cor(mir_expr, mrna_expr, use = "complete.obs")
+      }
+    }
+  }
+  return(result)
+}
+```
+
+# Figure 1: The Prevalence of Context-Dependence
+
+This figure summarizes our key finding: for multiple well-studied miRNAs,
+essentially 100% of genes show context-dependent correlation.
+
+```{r fig1_data}
+# Compute classifications for multiple miRs
+selected_mirs <- c(
+  "hsa-miR-21-5p",
+  "hsa-let-7a-5p",
+  "hsa-miR-34a-5p",
+  "hsa-miR-362-3p"
+)
+
+# Compute correlations and classifications
+cat("Computing correlations for visualization...\n")
+mir_data <- list()
+for (mir in selected_mirs) {
+  if (mir %in% rownames(miRdata)) {
+    cat("  Processing", mir, "...\n")
+    cors <- compute_mir_matrix(mir, mRNAdata, miRdata, cancerType)
+
+    # Classify genes
+    valid <- rowSums(!is.na(cors)) >= 15
+    cors_valid <- cors[valid, ]
+
+    all_neg <- apply(cors_valid, 1, function(x) {
+      x <- x[!is.na(x)]
+      length(x) >= 15 && all(x < 0)
+    })
+    all_pos <- apply(cors_valid, 1, function(x) {
+      x <- x[!is.na(x)]
+      length(x) >= 15 && all(x > 0)
+    })
+    mixed <- apply(cors_valid, 1, function(x) {
+      x <- x[!is.na(x)]
+      length(x) >= 15 && any(x > 0) && any(x < 0)
+    })
+
+    mir_data[[mir]] <- list(
+      cors = cors,
+      n_all_neg = sum(all_neg),
+      n_all_pos = sum(all_pos),
+      n_mixed = sum(mixed),
+      n_total = sum(valid)
+    )
+  }
+}
+cat("Done!\n")
+```
+
+```{r fig1_plot, fig.width=10, fig.height=6, fig.cap="Prevalence of context-dependent correlation across miRNAs."}
+# Create summary data frame
+summary_df <- do.call(rbind, lapply(names(mir_data), function(mir) {
+  d <- mir_data[[mir]]
+  data.frame(
+    miR = mir,
+    Category = c("All Negative", "All Positive", "Context-Dependent"),
+    Count = c(d$n_all_neg, d$n_all_pos, d$n_mixed),
+    Percent = 100 * c(d$n_all_neg, d$n_all_pos, d$n_mixed) / d$n_total
+  )
+}))
+
+# Clean miR names for display
+summary_df$miR_short <- gsub("hsa-", "", summary_df$miR)
+summary_df$Category <- factor(summary_df$Category,
+                               levels = c("All Negative", "All Positive", "Context-Dependent"))
+
+# Stacked bar plot
+ggplot(summary_df, aes(x = miR_short, y = Percent, fill = Category)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  scale_fill_manual(values = c("All Negative" = "#2166AC",
+                                "All Positive" = "#B2182B",
+                                "Context-Dependent" = "#999999")) +
+  labs(x = "MicroRNA",
+       y = "Percentage of Genes",
+       title = "Gene Correlation Patterns Across Cancer Types",
+       subtitle = "Context-dependent correlation dominates for all miRNAs") +
+  theme_pub +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_text(aes(label = ifelse(Percent > 5, paste0(round(Percent, 1), "%"), "")),
+            position = position_stack(vjust = 0.5), color = "white", size = 4)
+```
+
+```{r fig1_save}
+# Save high-resolution version
+dpi <- 150
+png(file.path(figdir, "Figure_ContextDependence.png"),
+    width = 10*dpi, height = 6*dpi, res = dpi, bg = "white")
+print(last_plot())
+dev.off()
+```
+
+# Figure 2: Known Targets Show Variable Correlation
+
+This heatmap shows that even well-validated miRNA targets have inconsistent
+correlation patterns across cancer types.
+
+```{r fig2_data}
+# Get let-7a correlations for known targets
+let7a <- "hsa-let-7a-5p"
+let7a_cors <- mir_data[[let7a]]$cors
+
+known_targets <- c("KRAS", "NRAS", "HRAS", "HMGA2", "MYC", "LIN28A", "LIN28B",
+                   "IGF2BP1", "IGF2BP2")
+available_targets <- known_targets[known_targets %in% rownames(let7a_cors)]
+
+if (length(available_targets) > 0) {
+  target_cors <- let7a_cors[available_targets, , drop = FALSE]
+  # Remove cohorts with all NA
+  valid_cols <- colSums(!is.na(target_cors)) > 0
+  target_cors <- target_cors[, valid_cols]
+}
+```
+
+```{r fig2_heatmap, fig.width=14, fig.height=6, fig.cap="Correlation of validated let-7a targets varies dramatically across cancer types."}
+if (exists("target_cors") && ncol(target_cors) > 0) {
+  # Add annotation for positive/negative
+  annotation_row <- data.frame(
+    Target_Type = c(rep("RAS pathway", 3),
+                    rep("Development", 1),
+                    rep("Proliferation", 1),
+                    rep("Stemness", 4))
+  )
+  rownames(annotation_row) <- available_targets
+
+  pheatmap(target_cors,
+           main = "let-7a Correlation with Known Targets Across Cancer Types\n(Blue = negative, Red = positive)",
+           color = colorRampPalette(c("#2166AC", "white", "#B2182B"))(100),
+           breaks = seq(-0.6, 0.6, length.out = 101),
+           cluster_rows = TRUE,
+           cluster_cols = TRUE,
+           fontsize_row = 11,
+           fontsize_col = 9,
+           annotation_row = annotation_row,
+           border_color = NA)
+}
+```
+
+```{r fig2_save}
+dpi <- 150
+png(file.path(figdir, "Figure_TargetVariability.png"),
+    width = 14*dpi, height = 6*dpi, res = dpi, bg = "white")
+if (exists("target_cors") && ncol(target_cors) > 0) {
+  pheatmap(target_cors,
+           main = "let-7a Correlation with Known Targets Across Cancer Types",
+           color = colorRampPalette(c("#2166AC", "white", "#B2182B"))(100),
+           breaks = seq(-0.6, 0.6, length.out = 101),
+           cluster_rows = TRUE,
+           cluster_cols = TRUE,
+           fontsize_row = 11,
+           fontsize_col = 9,
+           border_color = NA)
+}
+dev.off()
+```
+
+# Figure 3: PRAD vs SKCM - A Tale of Two Cancers
+
+This visualization emphasizes Kevin's miR-362 example, showing how dramatically
+correlation patterns differ between prostate cancer and melanoma.
+
+```{r fig3_data}
+mir362 <- "hsa-miR-362-3p"
+mir362_cors <- mir_data[[mir362]]$cors
+```
+
+```{r fig3_scatter, fig.width=8, fig.height=8, fig.cap="miR-362 correlation profiles are uncorrelated between PRAD and SKCM."}
+# Create a beautiful scatter plot
+prad_cors <- mir362_cors[, "PRAD"]
+skcm_cors <- mir362_cors[, "SKCM"]
+
+# Remove NA pairs
+valid <- !is.na(prad_cors) & !is.na(skcm_cors)
+plot_data <- data.frame(
+  PRAD = prad_cors[valid],
+  SKCM = skcm_cors[valid]
+)
+
+# Calculate correlation
+rho <- cor(plot_data$PRAD, plot_data$SKCM)
+
+# Identify genes that flip
+plot_data$flip <- ifelse(plot_data$PRAD < -0.2 & plot_data$SKCM > 0.2, "Negative→Positive",
+                         ifelse(plot_data$PRAD > 0.2 & plot_data$SKCM < -0.2, "Positive→Negative",
+                                "Consistent"))
+
+ggplot(plot_data, aes(x = PRAD, y = SKCM)) +
+  geom_point(data = subset(plot_data, flip == "Consistent"),
+             color = "gray60", alpha = 0.08, size = 0.7) +
+  geom_point(data = subset(plot_data, flip != "Consistent"),
+             aes(color = flip), alpha = 0.85, size = 1.3) +
+  geom_abline(slope = 1, intercept = 0, color = "black", linetype = "dashed", size = 1) +
+  geom_hline(yintercept = 0, color = "gray50", linetype = "dotted") +
+  geom_vline(xintercept = 0, color = "gray50", linetype = "dotted") +
+  scale_color_manual(values = c("Consistent" = "gray50",
+                                 "Negative→Positive" = "#D7191C",
+                                 "Positive→Negative" = "#2C7BB6"),
+                     name = "Direction Change") +
+  labs(x = "Correlation in Prostate Cancer (PRAD)",
+       y = "Correlation in Melanoma (SKCM)",
+       title = "miR-362: Same miRNA, Different Contexts",
+       subtitle = sprintf("Correlation between profiles: r = %.3f (N = %d genes; flips = %d)",
+                          rho, nrow(plot_data), sum(plot_data$flip != "Consistent"))) +
+  theme_pub +
+  annotate("text", x = -0.68, y = -0.68,
+           label = "If correlation = regulation,\npoints cluster on diagonal",
+           hjust = 0, vjust = 0, size = 4, color = "gray40", fontface = "italic") +
+  coord_fixed(ratio = 1, xlim = c(-0.7, 0.7), ylim = c(-0.7, 0.7)) +
+  theme(plot.margin = margin(5.5, 16, 5.5, 5.5))
+```
+
+```{r fig3_save}
+dpi <- 150
+png(file.path(figdir, "Figure_PRAD_SKCM.png"),
+    width = 8*dpi, height = 8*dpi, res = dpi, bg = "white")
+print(last_plot())
+dev.off()
+```
+
+# Figure 4: Summary Statistics Across All miRNAs
+
+```{r fig4_summary, fig.width=12, fig.height=5}
+# Create a visual summary
+summary_table <- do.call(rbind, lapply(names(mir_data), function(mir) {
+  d <- mir_data[[mir]]
+  data.frame(
+    miR = gsub("hsa-", "", mir),
+    `Total Genes` = d$n_total,
+    `All Negative` = d$n_all_neg,
+    `All Positive` = d$n_all_pos,
+    `Context-Dependent` = d$n_mixed,
+    `Percent Context-Dependent` = round(100 * d$n_mixed / d$n_total, 1)
+  )
+}))
+
+cat("\n=== SUMMARY TABLE ===\n")
+print(summary_table)
+```
+
+# Figure 5: Cancer Cohort Clustering by miR-21 Patterns
+
+```{r fig5_cluster, fig.width=12, fig.height=10, fig.cap="Cancer types cluster by miR-21 correlation patterns."}
+mir21 <- "hsa-miR-21-5p"
+mir21_cors <- mir_data[[mir21]]$cors
+
+# Get top variable genes
+gene_var <- apply(mir21_cors, 1, var, na.rm = TRUE)
+top_genes <- names(sort(gene_var, decreasing = TRUE))[1:500]
+mir21_top <- mir21_cors[top_genes, ]
+
+# Clean up for clustering
+valid_cohorts <- colSums(!is.na(mir21_top)) > 250
+mir21_clean <- mir21_top[, valid_cohorts]
+mir21_clean[is.na(mir21_clean)] <- 0
+
+# Cohort-cohort correlation
+cohort_cor <- cor(mir21_clean)
+
+# Create annotation
+cancer_types <- data.frame(
+  Type = c("GI" = "Gastrointestinal",
+           "Lung" = "Lung",
+           "GYN" = "Gynecologic",
+           "Brain" = "Brain/CNS",
+           "Skin" = "Skin",
+           "GU" = "Genitourinary",
+           "Other" = "Other")[
+    c("COAD" = "GI", "READ" = "GI", "ESCA" = "GI", "STAD" = "GI", "LIHC" = "GI", "PAAD" = "GI", "CHOL" = "GI",
+      "LUAD" = "Lung", "LUSC" = "Lung", "MESO" = "Lung",
+      "OV" = "GYN", "UCEC" = "GYN", "UCS" = "GYN", "CESC" = "GYN", "BRCA" = "GYN",
+      "LGG" = "Brain", "PCPG" = "Brain",
+      "SKCM" = "Skin", "UVM" = "Skin",
+      "PRAD" = "GU", "BLCA" = "GU", "KIRC" = "GU", "KIRP" = "GU", "KICH" = "GU", "TGCT" = "GU",
+      "ACC" = "Other", "THCA" = "Other", "THYM" = "Other", "HNSC" = "Other",
+      "DLBC" = "Other", "SARC" = "Other")[colnames(cohort_cor)]
+  ]
+)
+rownames(cancer_types) <- colnames(cohort_cor)
+
+pheatmap(cohort_cor,
+         main = "Cancer Cohort Similarity by miR-21 Correlation Patterns",
+         color = colorRampPalette(c("#2166AC", "white", "#B2182B"))(100),
+         breaks = seq(-1, 1, length.out = 101),
+         clustering_method = "ward.D2",
+         fontsize = 10,
+         border_color = NA)
+```
+
+```{r fig5_save}
+dpi <- 150
+png(file.path(figdir, "Figure_CohortClustering.png"),
+    width = 12*dpi, height = 10*dpi, res = dpi, bg = "white")
+pheatmap(cohort_cor,
+         main = "Cancer Cohort Similarity by miR-21 Correlation Patterns",
+         color = colorRampPalette(c("#2166AC", "white", "#B2182B"))(100),
+         breaks = seq(-1, 1, length.out = 101),
+         clustering_method = "ward.D2",
+         fontsize = 10,
+         border_color = NA)
+dev.off()
+```
+
+# Conclusions
+
+These visualizations highlight several key points for Kevin's manuscript:
+
+1. **Context-dependence is universal**: For all miRNAs tested, 99%+ of genes
+   show context-dependent correlation patterns (Figure 1).
+
+2. **Even validated targets vary**: Known direct targets of let-7a show
+   correlation ranging from -0.6 to +0.5 across cancer types (Figure 2).
+
+3. **Same miR, different behavior**: miR-362's correlation profile in prostate
+   cancer is essentially unrelated (r ≈ 0.2) to its profile in melanoma (Figure 3).
+
+4. **Cancer types have distinct signatures**: Clustering by miR correlation
+   patterns reveals tissue-specific regulatory contexts (Figure 5).
+
+These findings provide strong visual support for the thesis that "correlation
+is not regulation" and that researchers must consider biological context when
+interpreting miR-mRNA relationships.
+
+# Appendix
+
+```{r list_figures}
+cat("Generated figures:\n")
+list.files(figdir, pattern = "Figure_.*\\.png")
+```
+
+```{r si}
+sessionInfo()
+```

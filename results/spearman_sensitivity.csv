@@ -1,0 +1,2 @@
+"G","M","domain_pairs","min_n_per_cohort","min_k","eps","thr_abs_global","cor_pearson_vs_spearman","simpson_reversal_rate_spearman","eligible_pairs"
+1000,50,50000,20,10,0.05,0.2,0.938198415290408,0.126237623762376,15756

@@ -1,0 +1,418 @@
+---
+title: "Simpson-Style Example of Context-Dependent Correlation"
+author: "Kevin R. Coombes (analysis extended by Amir)"
+date: "Original: 1 January 2026; Latest Run: `r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    highlight: kate
+    theme: yeti
+---
+
+```{r sigh, echo=FALSE}
+source("00-paths.R")
+figdir <- file.path(paths$results, "Figures")
+if (!dir.exists(figdir)) dir.create(figdir, recursive = TRUE)
+rm(paths)
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=7, fig.height=5, dev = "png",
+                      fig.path = file.path(figdir, "R400"))
+options(width=96)
+.format <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+if (is.null(.format)) .format <- "broken"
+.figger <- function(N, cap ) ifelse(.format != "latex",
+                                 paste("Figure", N, ":",  cap),
+                                 cap)
+.taboo <- function(N, cap ) ifelse(.format %in% c("html", "docx"),
+                                 paste("Table ", N, ": ",  cap, sep = ""),
+                                 cap)
+.sizzle <- function(pixels) ifelse(.format == "latex",
+                                   pixels/2, pixels)
+```
+```{r mycss, results="asis", echo=FALSE}
+cat('
+<style type="text/css">
+b, strong {color: red; }
+i, em {color: blue; }
+.defn {color: purple; }
+.para {color: purple;
+      font-weight: bold;
+}
+.figure { text-align: center; }
+.caption { font-weight: bold; }
+</style>
+')
+```
+
+# Summary
+We want a concrete Simpson-style example: a miR-mRNA pair whose *global* correlation
+has the opposite sign of the *majority* of within-cohort correlations. We searched
+the top 10 high-variance miRs and ranked pairs by spread plus sign reversal. The best
+pair is **hsa-miR-200c-3p vs HTRA3** with global correlation **+0.403**, but **22**
+cohorts are negative vs **9** positive (31 valid). The cohort spread is **1.178**
+and median |r| is **0.272**; the most positive cohort is **UVM (r = 0.555)** and the
+most negative is **READ (r = -0.623)**. We then visualize this in global and
+cohort-specific plots, add a filtered Simpson-style view that removes low-|r|
+cohorts, and quantify the heterogeneity with Cochran’s Q/I² plus a random-effects
+meta-analysis of Fisher Z values.
+
+# Background
+The global (pan-cancer) correlation can be dominated by differences between cohorts.
+To illustrate this clearly, we will identify a miR-mRNA pair with a strong correlation
+across all samples, but an opposite pattern when we compute the correlations within
+each cancer cohort.
+
+# Data and Setup
+Rationale: we load the matched miR/mRNA expression data and validate that cohort labels
+and colors are available for plotting.
+```{r load}
+source("00-paths.R")
+f1 <- file.path(paths$mirtcga, "matchedNoGBM.Rda")
+f2 <- file.path(paths$mirtcga, "matchedNoGBM.rda")
+if (file.exists(f1)) {
+  load(f1)
+} else if (file.exists(f2)) {
+  load(f2)
+} else {
+  stop("Cannot find matchedNoGBM.Rda or matchedNoGBM.rda in ", paths$mirtcga)
+}
+rm(paths)
+if (!exists("cohortColors")) {
+  stop("cohortColors not found in matchedNoGBM data.")
+}
+if (!exists("colvec")) {
+  colvec <- cohortColors[cancerType]
+}
+dim(miRdata)
+dim(mRNAdata)
+length(cancerType)
+```
+The matched data load cleanly. Next, we will confirm sample sizes per cohort to guide
+thresholds for the local correlation analysis.
+
+Rationale: we want to understand cohort sizes so we can avoid tiny cohorts when we
+screen for sign flips.
+```{r cohortSizes}
+nPerCohort <- sort(table(cancerType), decreasing = TRUE)
+nPerCohort
+summary(as.vector(nPerCohort))
+```
+Most cohorts have large sample sizes, so we can safely require a minimum number of
+cohorts with non-missing correlations. Next, we choose a small set of miRs to screen
+based on variance across all samples.
+
+# Search Strategy
+Rationale: we start with miRs that vary the most across the full data set, because they
+are more likely to produce strong, interpretable correlations.
+```{r pickMir}
+mirVar <- apply(miRdata, 1, var)
+mirRank <- names(sort(mirVar, decreasing = TRUE))
+topN <- 10
+topMir <- mirRank[1:topN]
+topMir
+```
+We now evaluate each of these miRs for a Simpson-style pattern by comparing global
+correlations to the sign pattern across cohorts.
+
+Rationale: for each candidate miR, we compute global correlations to all genes, then
+compute within-cohort correlations and look for sign reversals with large spread.
+```{r searchCandidates}
+minCohorts <- 10
+minOppCount <- 10
+minMedianAbs <- 0.25
+minGlobalAbs <- 0.20
+
+candidateList <- list()
+for (mir in topMir) {
+  mAll <- miRdata[mir, ]
+  global <- cor(t(mRNAdata), mAll)
+  local <- sapply(levels(cancerType), function(ct) {
+    idx <- which(cancerType == ct)
+    cor(t(mRNAdata[, idx]), mAll[idx])
+  })
+  nValid <- rowSums(!is.na(local))
+  nPos <- rowSums(local > 0, na.rm = TRUE)
+  nNeg <- rowSums(local < 0, na.rm = TRUE)
+  medAbs <- apply(local, 1, function(x) median(abs(x), na.rm = TRUE))
+  spread <- apply(local, 1, function(x) max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+
+  oppCount <- ifelse(global > 0, nNeg, nPos)
+  majOpp <- oppCount > (nValid / 2)
+  flip <- !is.na(global) & nValid >= minCohorts &
+    oppCount >= minOppCount & majOpp &
+    medAbs >= minMedianAbs & abs(global) >= minGlobalAbs
+
+  if (any(flip)) {
+    score <- spread * abs(global)
+    score[!flip] <- NA
+    pick <- which.max(score)
+    candidateList[[mir]] <- data.frame(
+      miR = mir,
+      gene = rownames(mRNAdata)[pick],
+      global = global[pick],
+      spread = spread[pick],
+      nPos = nPos[pick],
+      nNeg = nNeg[pick],
+      nValid = nValid[pick],
+      medAbs = medAbs[pick],
+      score = score[pick],
+      stringsAsFactors = FALSE
+    )
+  }
+}
+
+candidates <- do.call(rbind, candidateList)
+candidates <- candidates[order(-candidates$score), ]
+head(candidates, 5)
+```
+We identified one or more strong candidates. Next, we select the top-ranked pair and
+compute the full cohort-wise correlation profile for visualization.
+
+# Detailed Look at the Best Pair
+Rationale: we recompute cohort correlations for the top-ranked pair and extract the
+most extreme positive and negative cohorts for focused plots.
+```{r bestPair}
+best <- candidates[1, ]
+bestMir <- best$miR
+bestGene <- best$gene
+
+mAll <- miRdata[bestMir, ]
+globalBest <- cor(mRNAdata[bestGene, ], mAll)
+localBest <- sapply(levels(cancerType), function(ct) {
+  idx <- which(cancerType == ct)
+  cor(mRNAdata[bestGene, idx], mAll[idx])
+})
+nPerCohort <- table(cancerType)
+localTab <- data.frame(
+  Cohort = names(localBest),
+  Correlation = as.vector(localBest),
+  N = as.vector(nPerCohort[names(localBest)]),
+  stringsAsFactors = FALSE
+)
+localTab <- localTab[order(localTab$Correlation, decreasing = TRUE), ]
+localTab
+```
+The top-ranked pair shows clear sign disagreement: the global correlation has the
+opposite sign from most cohorts. Now we will visualize this in three steps: (1) global
+scatter, (2) cohort correlation bars, and (3) two contrasting cohorts.
+
+Rationale: the global scatter plot shows the overall correlation across all samples.
+```{r figGlobal, fig.cap=.figger(1, "Global miR-mRNA correlation across all cohorts."), fig.width=7, fig.height=6}
+plot(mRNAdata[bestGene, ], mAll, col = colvec, pch = 16,
+     xlab = bestGene, ylab = bestMir,
+     main = paste("Global correlation:", round(globalBest, 3)))
+```
+The global scatter highlights a clear overall trend. Next, we compare it to the
+cohort-by-cohort correlations to show the contradiction explicitly.
+
+Rationale: a barplot of cohort correlations makes the sign reversal easy to read.
+```{r figBars, fig.cap=.figger(2, "Within-cohort correlations for the Simpson-style pair."), fig.width=10, fig.height=6}
+opar <- par(mar = c(8, 4, 2, 1))
+pts <- barplot(localTab$Correlation, names.arg = localTab$Cohort,
+               col = cohortColors[localTab$Cohort], las = 2, cex.names = 0.7,
+               ylab = "Correlation", main = "Cohort correlations (sorted)")
+abline(h = globalBest, lwd = 2, col = "black")
+par(opar)
+```
+The barplot shows the mismatch between the global estimate and the local pattern.
+Next, we inspect one positive and one negative cohort in detail.
+
+Rationale: contrasting two cohorts makes the Simpson-style reversal concrete in raw
+expression space.
+```{r figCohorts, fig.cap=.figger(3, "Contrasting cohorts with opposite-sign correlations."), fig.width=10, fig.height=5}
+posCohort <- localTab$Cohort[1]
+negCohort <- localTab$Cohort[nrow(localTab)]
+
+par(mfrow = c(1,2))
+idxPos <- which(cancerType == posCohort)
+plot(mRNAdata[bestGene, idxPos], mAll[idxPos], col = cohortColors[posCohort], pch = 16,
+     xlab = bestGene, ylab = bestMir,
+     main = paste(posCohort, "corr =", round(localBest[posCohort], 3)))
+
+idxNeg <- which(cancerType == negCohort)
+plot(mRNAdata[bestGene, idxNeg], mAll[idxNeg], col = cohortColors[negCohort], pch = 16,
+     xlab = bestGene, ylab = bestMir,
+     main = paste(negCohort, "corr =", round(localBest[negCohort], 3)))
+par(mfrow = c(1,1))
+```
+The two cohort plots show opposite slopes, confirming that the global correlation is
+not representative of most cohort-level relationships. Next, we will report a short
+table of sign counts to make the logic explicit.
+
+Rationale: a compact table summarizes the sign distribution across cohorts.
+```{r signTable}
+signSummary <- data.frame(
+  Global = globalBest,
+  N_Pos = sum(localBest > 0, na.rm = TRUE),
+  N_Neg = sum(localBest < 0, na.rm = TRUE),
+  N_Valid = sum(!is.na(localBest)),
+  Median_Abs = median(abs(localBest), na.rm = TRUE)
+)
+signSummary
+```
+This summary confirms that the global sign is opposite to the majority of cohort
+signs, which is the core Simpson-style effect we wanted. At this point, we have a
+concrete example and three linked figures suitable for a manuscript or supplement.
+
+# Decomposition: Between vs Within Cohorts
+Rationale: quantify how much of the global correlation is driven by between-cohort
+differences versus within-cohort covariance.
+```{r decomp}
+coh <- as.character(cancerType)
+mx <- tapply(mRNAdata[bestGene, ], coh, mean)
+my <- tapply(mAll, coh, mean)
+
+N <- length(mAll)
+muX <- mean(mRNAdata[bestGene, ])
+muY <- mean(mAll)
+
+covGlobal <- cov(mRNAdata[bestGene, ], mAll)
+covWithin <- 0
+covBetween <- 0
+for (ct in names(mx)) {
+  idx <- which(cancerType == ct)
+  nx <- length(idx)
+  if (nx < 2) next
+  cx <- mRNAdata[bestGene, idx]
+  cy <- mAll[idx]
+  covWithin <- covWithin + (nx - 1) * cov(cx, cy)
+  covBetween <- covBetween + nx * (mean(cx) - muX) * (mean(cy) - muY)
+}
+covWithin <- covWithin/(N - 1)
+covBetween <- covBetween/(N - 1)
+
+data.frame(Global = covGlobal, Within = covWithin, Between = covBetween)
+```
+The between-cohort covariance is strongly positive, while the within-cohort
+covariance is negative. This is the quantitative driver of the Simpson reversal.
+
+# Heterogeneity Test (Cochran’s Q, I²)
+Rationale: test whether the cohort-specific correlations are statistically
+consistent with a single common correlation. The null hypothesis is that all
+cohorts share the same true correlation. The p-value is the chi-squared test for
+heterogeneity.
+```{r heterogeneity}
+nPer <- table(cancerType)
+validCoh <- names(localBest)[!is.na(localBest)]
+nCoh <- as.numeric(nPer[validCoh])
+z <- atanh(localBest[validCoh])
+w <- nCoh - 3
+zbar <- sum(w * z)/sum(w)
+
+Q <- sum(w * (z - zbar)^2)
+df <- length(z) - 1
+pval <- 1 - pchisq(Q, df)
+I2 <- max(0, (Q - df)/Q)
+
+data.frame(Q = Q, df = df, p_value = pval, I2 = I2)
+```
+The Q test evaluates heterogeneity of Fisher Z across cohorts. A small p-value
+indicates that the cohort correlations are not equal, supporting context dependence.
+
+# Random-Effects Meta-Analysis of Correlations
+Rationale: compute a pooled correlation that allows between-cohort variance (tau²)
+using a standard DerSimonian–Laird random-effects model on Fisher Z values.
+```{r randomEffects}
+denom <- sum(w) - sum(w^2)/sum(w)
+tau2 <- max(0, (Q - df)/denom)
+
+wRE <- 1/(1/w + tau2)
+zRE <- sum(wRE * z)/sum(wRE)
+rRE <- (exp(2 * zRE) - 1)/(exp(2 * zRE) + 1)
+
+data.frame(tau2 = tau2, zRE = zRE, rRE = rRE)
+```
+The random-effects estimate reflects the average cohort correlation while accounting
+for between-cohort heterogeneity.
+
+# Canonical Simpson Visualization (Cohort Means)
+Rationale: show the cohort-mean trend directly (Simpson-style).
+```{r figMeans, fig.cap=.figger(5, "Cohort means for the Simpson pair."), fig.width=7, fig.height=5}
+plot(mx, my, col = cohortColors[names(mx)], pch = 16,
+     xlab = paste(bestGene, "(mean)"), ylab = paste(bestMir, "(mean)"),
+     main = paste("Cohort means r =", round(cor(mx, my), 3)))
+abline(lm(my ~ mx), lwd = 2)
+text(mx, my, labels = names(mx), col = cohortColors[names(mx)],
+     pos = 3, cex = 0.7)
+```
+The cohort means show a strong positive trend, even though most within-cohort
+correlations are negative.
+
+
+# Filtered Simpson-Style Visualization
+Rationale: to sharpen the visual contrast, we keep only the top K cohorts by |r|
+and overlay the global trend against per-cohort trends for those groups.
+```{r filterCohorts}
+K <- 5
+ord <- order(abs(localTab$Correlation), decreasing = TRUE)
+keep <- localTab$Cohort[ord[1:K]]
+keep
+```
+These cohorts have the strongest within-cohort signals and are best suited for a
+clean Simpson-style visualization. Next we plot all points in light gray, then
+overlay the selected cohorts with their own regression lines and the global line.
+
+Rationale: the global line should slope one way, while most cohort lines slope the
+other way.
+```{r figSimpson, fig.cap=.figger(4, "Simpson-style visualization using filtered cohorts. Gray = all samples, colored = selected cohorts; black line = global trend; colored lines = within-cohort trends."), fig.width=8, fig.height=6}
+plot(mRNAdata[bestGene, ], mAll, col = "gray80", pch = 16,
+     xlab = bestGene, ylab = bestMir,
+     main = paste(bestMir, "vs", bestGene))
+abline(lm(mAll ~ mRNAdata[bestGene, ]), lwd = 2)
+
+for (ct in keep) {
+  idx <- which(cancerType == ct)
+  points(mRNAdata[bestGene, idx], mAll[idx], col = cohortColors[ct], pch = 16)
+  abline(lm(mAll[idx] ~ mRNAdata[bestGene, idx]), col = cohortColors[ct], lwd = 2)
+}
+```
+The global line (black) now contrasts clearly with the majority of cohort lines,
+which highlights the Simpson-style reversal in a single panel.
+
+# Four-Panel Summary Figure
+Rationale: combine the key plots into a single multi-panel figure for the main text.
+```{r figPanel, fig.cap=.figger(6, "Four-panel summary of Simpson-style behavior."), fig.width=12, fig.height=10}
+opar <- par(mfrow = c(2, 2))
+
+# Panel A: global scatter
+plot(mRNAdata[bestGene, ], mAll, col = "gray80", pch = 16,
+     xlab = bestGene, ylab = bestMir,
+     main = paste("Global r =", round(globalBest, 3)))
+abline(lm(mAll ~ mRNAdata[bestGene, ]), lwd = 2)
+
+# Panel B: cohort correlations (barplot)
+par(mar = c(8, 4, 2, 1))
+barplot(localTab$Correlation, names.arg = localTab$Cohort,
+        col = cohortColors[localTab$Cohort], las = 2, cex.names = 0.7,
+        ylab = "Correlation", main = "Cohort correlations")
+abline(h = globalBest, lwd = 2, col = "black")
+
+# Panel C: cohort means
+par(mar = c(5, 4, 2, 1))
+plot(mx, my, col = cohortColors[names(mx)], pch = 16,
+     xlab = paste(bestGene, "(mean)"), ylab = paste(bestMir, "(mean)"),
+     main = paste("Cohort means r =", round(cor(mx, my), 3)))
+abline(lm(my ~ mx), lwd = 2)
+
+# Panel D: filtered Simpson plot
+plot(mRNAdata[bestGene, ], mAll, col = "gray80", pch = 16,
+     xlab = bestGene, ylab = bestMir,
+     main = "Filtered cohorts")
+abline(lm(mAll ~ mRNAdata[bestGene, ]), lwd = 2)
+for (ct in keep) {
+  idx <- which(cancerType == ct)
+  points(mRNAdata[bestGene, idx], mAll[idx], col = cohortColors[ct], pch = 16)
+  abline(lm(mAll[idx] ~ mRNAdata[bestGene, idx]), col = cohortColors[ct], lwd = 2)
+}
+
+par(opar)
+```
+This combined figure captures the global trend, cohort variability, mean-level
+Simpson structure, and the filtered reversal in one place.
+
+# Conclusions
+We isolated a single miR-mRNA pair where the global correlation reverses the direction
+of the majority of cohort-specific correlations. This provides a concrete and visual
+illustration of why subgroup structure can invalidate naive interpretations of
+pan-cancer correlation.

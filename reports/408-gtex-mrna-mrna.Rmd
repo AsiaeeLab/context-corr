@@ -1,0 +1,319 @@
+---
+title: "GTEx Pilot: mRNA–mRNA Correlation in Context (Tissues)"
+author: "Amir (building on Kevin R. Coombes' framework)"
+date: "Original: `r Sys.Date()`; Latest Run: `r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    highlight: kate
+    theme: yeti
+---
+
+```{r sigh, echo=FALSE}
+source("00-paths.R")
+figdir <- file.path(paths$results, "Figures")
+if (!dir.exists(figdir)) dir.create(figdir, recursive = TRUE)
+rm(paths)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=7, fig.height=5, dev = "png",
+                      fig.path = file.path(figdir, "R408"))
+options(width=96)
+.format <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+if (is.null(.format)) .format <- "broken"
+.figger <- function(N, cap ) ifelse(.format != "latex",
+                                 paste("Figure", N, ":",  cap),
+                                 cap)
+```
+
+```{r mycss, results="asis", echo=FALSE}
+cat('
+<style type="text/css">
+b, strong {color: red; }
+i, em {color: blue; }
+.defn {color: purple; }
+.para {color: purple;
+      font-weight: bold;
+}
+.figure { text-align: center; }
+.caption { font-weight: bold; }
+</style>
+')
+```
+
+# Summary
+We want to test whether “correlation in context” is cancer-specific.
+GTEx provides a non-cancer setting with strong biological context: tissue type.
+
+In this pilot we:
+1) load GTEx mRNA expression (Xena-derived) and tissue labels (parsed from sample IDs),
+2) quantify heterogeneity of mRNA–mRNA correlations across tissues using Cochran’s Q / I²,
+3) estimate how often global correlation disagrees with the tissue-majority sign, and
+4) produce a canonical Simpson-style visualization for one mRNA–mRNA pair.
+
+To keep this fast, we work on the top variable genes and sample a manageable number of gene pairs.
+
+# Load GTEx data
+Rationale: load the saved GTEx object and inspect its shape. The file uses Xena-style sample IDs
+that embed a four-digit tissue code (e.g., `... .0011. ...`).
+```{r load}
+f1 <- "/home/amir/datasets/mirTCGA/xena-gtex.Rda"
+f2 <- "/home/amir/datasets/mirTCGA/clean/xena-gtex.Rda"
+if (file.exists(f1)) {
+  load(f1)
+} else if (file.exists(f2)) {
+  load(f2)
+} else {
+  stop("Cannot find xena-gtex.Rda at ", f1, " or ", f2)
+}
+stopifnot(is.list(gtex), "mrna" %in% names(gtex))
+
+X <- as.matrix(gtex$mrna)  # genes x samples, values appear to be log2(TPM + 0.001)
+dim(X)
+```
+We have 19k genes across ~7.8k samples. Next we derive tissue codes from the sample IDs.
+
+# Tissue labels
+Rationale: parse the 4-digit tissue code from Xena GTEx sample IDs; use it as a “context” label.
+```{r tissue}
+parse_tissue_code <- function(ids) {
+  out <- sub("^GTEX\\.[^.]+\\.([0-9]{4})\\..*$", "\\1", ids)
+  out[out == ids] <- NA_character_
+  out
+}
+
+tissue_code <- parse_tissue_code(colnames(X))
+stopifnot(all(!is.na(tissue_code)))
+
+tab <- sort(table(tissue_code), decreasing = TRUE)
+head(tab, 20)
+length(tab)
+```
+We see dozens of tissues with varying sample sizes. For stable correlation estimates,
+we restrict to tissues with reasonably large sample sizes and then keep the top set.
+
+Rationale: pick the largest tissues to keep computations tractable.
+```{r chooseTissues}
+min_n <- 150
+keep_tissues <- names(tab)[tab >= min_n]
+# Keep at most 20 tissues for a first pilot.
+keep_tissues <- keep_tissues[1:min(20, length(keep_tissues))]
+keep_tissues
+tab[keep_tissues]
+```
+Now we choose a subset of genes for an efficient mRNA–mRNA scan.
+
+# Gene subset and pair sampling
+Rationale: mRNA–mRNA is extremely high-dimensional; start with the most variable genes.
+```{r geneSubset}
+G <- 1500
+geneVar <- apply(X, 1, var)
+genes <- names(sort(geneVar, decreasing = TRUE))[1:G]
+length(genes)
+```
+We next sample gene pairs from this subset. We intentionally sample many pairs so we can estimate
+rates and distributions without computing all $\approx 1.1$ million pairs.
+
+Rationale: sample P unique gene pairs (i < j).
+```{r samplePairs}
+set.seed(1)
+P <- 200000
+
+sample_pairs <- function(G, P) {
+  i <- sample.int(G, size = 2 * P, replace = TRUE)
+  j <- sample.int(G, size = 2 * P, replace = TRUE)
+  ok <- i != j
+  i <- i[ok]; j <- j[ok]
+  a <- pmin(i, j); b <- pmax(i, j)
+  key <- paste(a, b, sep = "_")
+  u <- !duplicated(key)
+  a <- a[u]; b <- b[u]
+  if (length(a) < P) stop("Not enough unique pairs sampled.")
+  list(i = a[1:P], j = b[1:P])
+}
+
+pairs <- sample_pairs(G, P)
+str(pairs)
+```
+Now we compute global correlations and then tissue-specific correlations for these sampled pairs.
+
+# Global correlations
+Rationale: compute the full correlation matrix once for the gene subset, then extract sampled pairs.
+```{r globalCorr}
+Xsub <- X[genes, , drop = FALSE]
+cor_global <- cor(t(Xsub))
+
+r_global <- cor_global[cbind(pairs$i, pairs$j)]
+summary(r_global)
+```
+We now compute within-tissue correlation for the same sampled pairs.
+
+# Tissue-specific correlations (sampled pairs)
+Rationale: for each tissue, compute the correlation matrix for the gene subset and extract sampled pairs.
+```{r tissueCorr}
+R <- matrix(NA_real_, nrow = P, ncol = length(keep_tissues),
+            dimnames = list(NULL, keep_tissues))
+N <- setNames(integer(length(keep_tissues)), keep_tissues)
+
+for (tt in keep_tissues) {
+  idx <- which(tissue_code == tt)
+  N[tt] <- length(idx)
+  Xtt <- Xsub[, idx, drop = FALSE]
+  Ct <- suppressWarnings(cor(t(Xtt)))
+  R[, tt] <- Ct[cbind(pairs$i, pairs$j)]
+}
+
+summary(as.vector(R))
+```
+Now we can quantify two things: (1) how often global sign disagrees with the tissue-majority sign,
+and (2) how heterogeneous correlations are across tissues (Q/I²).
+
+# Reversal rate and heterogeneity (Q / I²)
+Rationale: compute sign-majority across tissues and Cochran’s Q/I² on Fisher Z.
+```{r heterogeneity}
+fz <- function(r) 0.5 * log((1 + r)/(1 - r))
+
+valid <- is.finite(R) & abs(R) < 1
+k <- rowSums(valid)
+
+sgn_majority <- rep(NA_integer_, P)
+sgn_majority[k > 0] <- sign(rowSums(valid & R > 0) - rowSums(valid & R < 0))[k > 0]
+
+reversal <- k > 0 & sign(r_global) != sgn_majority & sign(r_global) != 0 & sgn_majority != 0
+
+rate_all <- mean(reversal, na.rm = TRUE)
+rate_strong <- mean(reversal[abs(r_global) >= 0.2], na.rm = TRUE)
+c(reversal_all = rate_all, reversal_if_abs_global_ge_0p2 = rate_strong)
+
+# Q / I2
+z <- fz(pmin(pmax(R, -0.999999), 0.999999))
+W <- matrix(rep((N - 3), each = P), nrow = P)
+W[!valid] <- 0
+z[!valid] <- 0
+
+sum_w <- rowSums(W)
+z_bar <- rowSums(W * z)/pmax(sum_w, 1e-12)
+Q <- rowSums(W * (z - z_bar)^2, na.rm = TRUE)
+df <- pmax(k - 1, 0)
+I2 <- rep(NA_real_, P)
+ok <- df >= 1 & is.finite(Q)
+I2[ok] <- pmax(0, (Q[ok] - df[ok])/pmax(Q[ok], 1e-12))
+summary(I2)
+```
+If reversal and I² are substantial, that is strong evidence that “correlation in context”
+is not specific to cancer.
+
+# Tissue-mean residualization (Simpson diagnostic)
+Rationale: global correlations can be driven by between-tissue mean differences. We remove
+tissue means per gene and recompute correlation. This is the GTEx analog of `407`.
+```{r residGlobal}
+Xres <- Xsub
+for (tt in keep_tissues) {
+  idx <- which(tissue_code == tt)
+  Xres[, idx] <- sweep(Xsub[, idx, drop = FALSE], 1,
+                       rowMeans(Xsub[, idx, drop = FALSE]), "-")
+}
+cor_resid <- cor(t(Xres))
+r_resid <- cor_resid[cbind(pairs$i, pairs$j)]
+
+flip_resid <- sign(r_global) != sign(r_resid) & r_global != 0 & r_resid != 0
+c(
+  sign_flip_global_vs_resid = mean(flip_resid, na.rm = TRUE),
+  sign_flip_if_abs_global_ge_0p2 = mean(flip_resid[abs(r_global) >= 0.2], na.rm = TRUE)
+)
+```
+If these flip rates are non-trivial, it suggests a practical recommendation: when samples span
+multiple tissues, always check residualized correlation.
+
+Rationale: visualize global vs residualized correlations for the sampled pairs.
+```{r fig_resid, fig.cap=.figger(2, "Global vs residualized GTEx mRNA–mRNA correlations (sampled pairs)."), fig.width=7, fig.height=6}
+set.seed(1)
+ok2 <- is.finite(r_global) & is.finite(r_resid)
+ix <- which(ok2)
+if (length(ix) > 200000) ix <- sample(ix, 200000)
+
+plot(r_global[ix], r_resid[ix],
+     pch = 16, col = rgb(0, 0, 0, 0.05),
+     xlab = "Global correlation",
+     ylab = "Residualized correlation (tissue means removed)",
+     main = "GTEx: tissue means drive some global correlations")
+abline(h = 0, v = 0, lwd = 2, col = "grey70")
+abline(a = 0, b = 1, lwd = 2, col = "red")
+```
+
+# Choose a Simpson-style example pair
+Rationale: find a pair with a strong global correlation but opposite tissue-majority sign,
+and high heterogeneity.
+```{r pickExample}
+score <- rep(-Inf, P)
+score[reversal & is.finite(I2)] <- abs(r_global[reversal & is.finite(I2)]) * I2[reversal & is.finite(I2)]
+best <- which.max(score)
+
+g1 <- genes[pairs$i[best]]
+g2 <- genes[pairs$j[best]]
+
+list(gene1 = g1, gene2 = g2, global_r = r_global[best], I2 = I2[best])
+```
+We now build a canonical Simpson-style visualization for this pair.
+
+# Canonical plot (4 panels)
+Rationale: mimic the Simpson panel figure: global scatter, within-tissue correlations,
+tissue means, and a filtered Simpson overlay (top K tissues by |r| for visibility).
+```{r fig1, fig.cap=.figger(1, "A Simpson-style mRNA–mRNA example in GTEx (tissue context)."), fig.width=11, fig.height=8}
+K <- 6
+
+x <- as.numeric(X[g1, ])
+y <- as.numeric(X[g2, ])
+tt <- factor(tissue_code, levels = keep_tissues)
+in_keep <- !is.na(tt)
+x <- x[in_keep]; y <- y[in_keep]; tt <- droplevels(tt[in_keep])
+
+# Tissue colors
+cols <- grDevices::hcl.colors(nlevels(tt), "Dark 3")
+names(cols) <- levels(tt)
+
+r_tissue <- R[best, ]
+ord <- order(r_tissue, na.last = NA)
+topK <- names(sort(abs(r_tissue), decreasing = TRUE))[1:min(K, sum(!is.na(r_tissue)))]
+
+opar <- par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+
+plot(x, y, pch = 16, col = rgb(0.5, 0.5, 0.5, 0.08),
+     xlab = g1, ylab = g2,
+     main = sprintf("Global r = %.3f", cor(x, y)))
+abline(lm(y ~ x), lwd = 2)
+
+barplot(r_tissue[ord], las = 2, col = cols[names(r_tissue)[ord]],
+        ylab = "Within-tissue correlation",
+        main = "Tissue correlations (selected tissues)")
+abline(h = 0, lwd = 2)
+abline(h = cor(x, y), lwd = 2)
+
+xm <- tapply(x, tt, mean)
+ym <- tapply(y, tt, mean)
+plot(as.numeric(xm), as.numeric(ym), pch = 16, col = cols[names(xm)],
+     xlab = paste(g1, "(mean)"), ylab = paste(g2, "(mean)"),
+     main = sprintf("Means r = %.3f", cor(as.numeric(xm), as.numeric(ym))))
+abline(lm(as.numeric(ym) ~ as.numeric(xm)), lwd = 2)
+
+plot(x, y, pch = 16, col = rgb(0.6, 0.6, 0.6, 0.06),
+     xlab = g1, ylab = g2,
+     main = sprintf("Filtered overlay (top %d |r| tissues)", length(topK)))
+abline(lm(y ~ x), lwd = 2)
+for (t0 in topK) {
+  idx <- tt == t0
+  points(x[idx], y[idx], pch = 16, col = rgb(col2rgb(cols[t0])[1]/255, col2rgb(cols[t0])[2]/255, col2rgb(cols[t0])[3]/255, 0.35))
+  abline(lm(y[idx] ~ x[idx]), col = cols[t0], lwd = 2)
+}
+
+par(opar)
+```
+This is the non-cancer analog of the TCGA Simpson plot: a global association that is
+in tension with the within-tissue pattern.
+
+# Next steps
+The next refinement is to add tissue-mean residualization (as in `407`) to quantify
+how much of global mRNA–mRNA correlation is driven by between-tissue mean shifts, and
+to decide whether the strongest Simpson examples correspond to known biology
+(e.g., tissue markers vs shared regulation).

@@ -1,0 +1,272 @@
+---
+title: "TCGA miR-Seq Data"
+author: "Kevin R. Coombes"
+date: "8 August 2018"
+output: 
+  html_document:
+    toc: true
+    highlight: kate
+    theme: yeti
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r mycss, results="asis", echo=FALSE}
+cat('
+<style type="text/css">
+b, strong {color: red; }
+i, em {color: blue; }
+.defn {color: purple; }
+.para {color: purple;
+      font-weight: bold;
+}
+.figure { text-align: center; }
+.caption { font-weight: bold; }
+</style>
+')
+```
+
+# Background
+The goal of this report is to collect the normalized microRNA-Seq data produced by
+The Cancer Genome Atlas (TCGA). Among the possible data sources, we prefer to use
+FireBrowse, since it has already collected the data by cancer type.
+
+## Potential data sources
+
++ [Old TCGA Data Portal](https://tcga-data.nci.nih.gov/docs/publications/tcga/)
++ [cBioPortal](http://www.cbioportal.org/)
++ [FireBrowse](http://firebrowse.org/) -- this one is best for expression data!
++ [Genomic Data Commons](https://gdc-portal.nci.nih.gov/)
+
+# Fetching the Data
+We will need an R package to convert JSON-formatted files into R objects.
+```{r json}
+library(rjson)
+```
+We also define the paths used to store the data.
+```{r paths}
+source("00-paths.R")
+tcgapaths
+```
+
+## URLs for normalized miR-Seq data, by cancer type
+We are going to get the data from the FireBrowse web site. We used their online
+"Web API" page to figure out the search URL that will tell us what kinds of
+expression data exist for a given cancer type. In this section, we will look at
+this list for the "LUSC" cohort.
+```{r firebrowse.url}
+f <- file.path(tcgapaths$scratch, "firebrowse-mir.Rda")
+if (file.exists(f)) {
+  load(f)
+} else {
+  fb <- "http://firebrowse.org/api/v1/Archives/StandardData?format=json&date=2016_01_28"
+  misc <- "data_type=miRSeq&level=3%2C4&page=1&page_size=250&sort_by=cohort"
+  url <- paste(fb, misc, "cohort=LUSC", sep="&") # modify here for other cancers
+  stuff <- paste(readLines(url), collapse="")
+  obj <- fromJSON(stuff)
+  obj <- obj[[1]] # this is magic. Not clear why there is an extra top-level one-item list
+  rm(fb, misc, url, stuff)
+  save(obj, file=f)
+}
+rm(f)
+```
+
+Now we can peek at the first item in the list returned by searching FireBrowse.
+```{r obj}
+class(obj)
+length(obj)
+names(obj[[1]])
+obj[[1]]$urls
+```
+The URL that we want is the first one, since this is not just the MD5 hash nor the
+MAGE format. Now, most of this URL is the same for every cancer type; the only thing
+that changes (in two places) is the "cohort" that describes what kind of cancer we
+are studying. So, we are going to create a function that will construct the correct
+Firebrowse URL from the cohort name.
+
+```{r spliturl}
+oneurl <- obj[[1]]$urls[1]
+parts <- strsplit(oneurl, "LUSC")[[1]]
+```
+
+
+```{r firebrowse}
+fb <- function(COHORT) {
+  paste(parts[1], COHORT,
+    parts[2], COHORT,
+    parts[3], sep="")
+}
+```
+Here is an example:
+```{r eg}
+fb("BRCA")
+```
+
+## How to fetch the miR-Seq data
+Since the data are in a "_tarred_" and "_gzipped_" file, we have to
+
+1. Download it (using <tt>download.file</tt>).
+2. Gunzip it, and untar it (all part of the same <tt>untar</tt> command in R).
+3. Delete the <.tar.gz</tt> file (using <tt>unlink</tt>).
+4. Read it into R.
+5. Extract the numeric values.
+6. Save the results to avoid having to do this again.
+
+All of these steps are performed in the following functions:
+```{r fetch}
+# downlad the file from FireBrowse and store locally
+fetch <- function(COHORT) {
+  dataurl <- fb(COHORT)
+  fname <- basename(dataurl)
+  val <- try( download.file(dataurl, fname) )
+  if(inherits(val, "try-error")) {
+    return(NULL)
+  }
+  cat("uncompressing\n", file=stderr())
+  untar(fname, compressed="gzip") # gunzip and untar
+  unlink(fname) # remove the tar.gz version
+  localdir <- sub(".tar.gz", "", fname)
+  file.rename(localdir, COHORT)
+  cat("Creating a binary R object\n", file=stderr())
+  temp <- file.path(COHORT, dir(COHORT, pattern="RPM.txt"))
+  datasrc <- file.path(COHORT, paste(COHORT, "txt", sep="."))
+  file.rename(temp, datasrc)
+  datasrc
+}
+# read the local file
+process <- function(LOCALSRC) {
+  ncounts <- read.table(LOCALSRC, sep="\t", header=TRUE, row.names = 1)
+  ncounts <- as.matrix(ncounts)
+  ncounts[is.na(ncounts)] <- 0 # really?
+  ncounts
+}
+# do both
+fetchAndProcess <- function(COHORT) {
+  localsrc <- fetch(COHORT)
+  if(is.null(localsrc)) return(NULL)
+  process(localsrc)
+}
+```
+
+**WARNING:** _This code will only work in a directory with a **short** name
+immediately off the root directory (C:\\) on a Windows machine.  This happens
+because, by default, a complete Windows path name cannot exceed 260 characters._
+
+Here is an example of how to use these functions.
+```{r example, fig.cap="Histogram of log-transformed data for ACC."}
+home <- getwd()
+short <- file.path(tcgapaths$raw, "miRSeq")
+if (!file.exists(short)) dir.create(short)
+setwd(short)
+f <- "ACC/ACC.txt"
+if (!file.exists(f)) {
+  ncounts  <- fetchAndProcess("ACC")
+} else {
+  ncounts <- process(f)
+}
+setwd(home)
+lcounts <- log2(1 + ncounts)
+hist(lcounts, breaks=123)
+```
+
+## Getting all the miR-Seq data
+We already have the names of all the TCGA cohorts.
+```{r cohorts}
+load(file.path(tcgapaths$clean, "cohorts.Rda"))
+cohorts[9:11,]
+```
+Note that one of these does not represent a known type of cancer; instead, it is part
+of a pilot study to process samples that were collected and stored as formalin-fixed
+paraffin-embedded (FFPE) tissue blocks, We don't want that data.
+
+```{r slurp}
+cleanDir <- file.path(tcgapaths$clean, "miRSeq")
+if (!file.exists(cleanDir)) dir.create(cleanDir)
+setwd(short)
+for (i in 1:nrow(cohorts)) {
+  cohort <- as.character(cohorts$cohort)[i]
+  if (cohort %in% c("FPPP", "LAML")) { # skip FFPE data; there is none for LAML
+    next
+  }
+  rawName <- file.path(cohort, paste(cohort, "txt", sep="."))
+  cleanName <- file.path(cleanDir, paste(cohort, "Rda", sep="."))
+  if (!file.exists(cleanName)) {
+    if (!file.exists(rawName)) {
+      ncounts <- fetchAndProcess(cohort)
+    } else {
+      ncounts <- process(rawName)
+    }
+    if(!is.null(ncounts)) {
+      lcounts <- log2(1 + ncounts)
+      save(ncounts, lcounts, file = cleanName)
+    }
+  }
+}
+setwd(home)
+```
+
+# Combined data
+Here we load the full miR-Sequencing data set for all 32(!) TCGA cancer types.
+```{r mega}
+tumorlist <- as.character(cohorts$cohort)
+dontUse <- c("FPPP", "COADREAD", "GBMLGG", "KIPAN", "STES", "LAML") # No LAML miR data
+tumorlist <- tumorlist[! (tumorlist %in% dontUse)]
+f <- file.path(tcgapaths$clean, "mirData.Rda")
+if (!file.exists(f)) {
+  for (k in 1:length(tumorlist)) {
+    tumor <- tumorlist[k]
+    cat("working on", tumor, "\n")
+    ## load miR-seq data
+    load(file.path(tcgapaths$clean, "miRSeq", paste(tumor, "Rda", sep=".")))
+    ## Get the preferred genenames by splitting on vertical bar (|) ...
+    genename <- unlist(lapply(rownames(lcounts), function(x)  {
+      strsplit(x,'[|][[:space:]]*')[[1]][1] 
+    }))
+    ## remove duplicates names
+    dups <- duplicated(genename)
+    if (any(dups)) {
+      lcounts <- lcounts[!dups,]
+      genename <- genename[!dups]
+    }
+    ## ... and use the names
+    rownames(lcounts) <- genename
+    lcounts <- lcounts[sort(genename),]
+    ct <- rep(tumor, ncol(lcounts))
+    if (exists("miRdata")) {
+      miRdata <- cbind(miRdata, lcounts)
+      cancerType <- c(cancerType, ct)
+    } else {
+      miRdata <- lcounts
+      cancerType <- ct
+    }
+    rm(genename, lcounts, ncounts)
+    gc()
+  } # end for k in 1:length(tumorlist)
+  ## Make cancerType a factor
+  cancerType <- factor(cancerType)
+  ## Remove features that *always* yield zero counts.
+  MN <- min(miRdata)
+  nzero <- apply(miRdata, 1, function(x) sum(x == MN))
+  miRdata <- miRdata[nzero < ncol(miRdata),]
+  nzero <- nzero[nzero < ncol(miRdata)]
+  save(miRdata, nzero, cancerType, tumorlist, file=f)
+} # end else
+rm(f)
+```
+
+```{r chi, echo=FALSE,eval=FALSE}
+chis <- t(apply(miRdata, 1, function(x) {
+  chi <- chisq.test(table(x, cancerType))
+  c(chi$statistic, chi$p.value)
+}))
+summary(chis)
+```
+
+# Appendix
+It's always a good idea to finish up by reporting which versions of the
+software tools were used for this analysis:
+```{r si}
+sessionInfo()
+```
+

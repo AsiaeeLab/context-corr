@@ -1,0 +1,63 @@
+---
+title: "PBMC Coarse Cell Types: Context Correlation Exploration"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+source("00-paths.R")
+out_dir <- file.path(paths$results, "sc", "sc_100_pbmc_coarse_celltypes")
+analysis_file <- file.path(out_dir, "analysis_ready.rds")
+summary_file <- file.path(out_dir, "summary_pairs.csv")
+ex_file <- file.path(out_dir, "top_exemplars.rds")
+
+stopifnot(file.exists(analysis_file), file.exists(summary_file), file.exists(ex_file))
+
+res <- readRDS(analysis_file)
+summary_pairs <- utils::read.csv(summary_file, stringsAsFactors = FALSE)
+exemplars <- readRDS(ex_file)
+```
+
+```{r quick-summary}
+head(summary_pairs[, c("feature_x", "feature_y", "r_global", "r_resid", "flag_simpson", "I2")], 10)
+```
+
+```{r precomputed-curve, message=FALSE, warning=FALSE}
+library(ggplot2)
+ggplot(res$curve, aes(abs_r_global_threshold, reversal_rate, color = factor(eps))) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  coord_cartesian(ylim = c(0, 1)) +
+  theme_bw() +
+  labs(title = "Precomputed reversal-rate curve", x = "|r_global| threshold", y = "Reversal rate", color = "eps")
+```
+
+```{r helper-filter}
+filter_pairs <- function(min_abs_r = 0.2, min_I2 = 0.5, simpson_only = TRUE) {
+  d <- summary_pairs
+  keep <- is.finite(d$r_global) & abs(d$r_global) >= min_abs_r & is.finite(d$I2) & d$I2 >= min_I2
+  if (simpson_only) keep <- keep & d$flag_simpson
+  d[keep, c("feature_x", "feature_y", "r_global", "r_resid", "flag_simpson", "I2", "Q", "p_heterogeneity")]
+}
+
+head(filter_pairs(min_abs_r = 0.2, min_I2 = 0.4, simpson_only = FALSE), 20)
+```
+
+```{r helper-exemplar-bars, message=FALSE, warning=FALSE}
+plot_exemplar_context <- function(i = 1) {
+  stopifnot(i >= 1, i <= length(exemplars$exemplars))
+  ex <- exemplars$exemplars[[i]]
+  d <- ex$per_context
+  ggplot(d, aes(reorder(context, r_c), r_c, fill = n_c)) +
+    geom_col() +
+    coord_flip() +
+    theme_bw() +
+    labs(
+      title = paste0("Exemplar ", i, ": ", ex$pair$feature_x, " vs ", ex$pair$feature_y),
+      x = "Context",
+      y = "r_c",
+      fill = "n_c"
+    )
+}
+
+plot_exemplar_context(1)
+```

@@ -1,0 +1,407 @@
+---
+title: "Case Studies: Context-Dependent miR Behavior Across Cancer Types"
+author: "Amir (Building on Kevin R. Coombes' framework)"
+date: "Original: `r Sys.Date()`; Latest Run: `r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    highlight: kate
+    theme: yeti
+---
+
+```{r sigh, echo=FALSE}
+source("00-paths.R")
+figdir <- file.path(paths$results, "Figures")
+if (!dir.exists(figdir)) dir.create(figdir, recursive = TRUE)
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=7, fig.height=5, dev = "png",
+                      fig.path = file.path(figdir, "R402"))
+options(width=96)
+.format <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+if (is.null(.format)) .format <- "broken"
+.figger <- function(N, cap ) ifelse(.format != "latex",
+                                 paste("Figure", N, ":",  cap),
+                                 cap)
+.taboo <- function(N, cap ) ifelse(.format %in% c("html", "docx"),
+                                 paste("Table ", N, ": ",  cap, sep = ""),
+                                 cap)
+```
+```{r mycss, results="asis", echo=FALSE}
+cat('
+<style type="text/css">
+b, strong {color: red; }
+i, em {color: blue; }
+.defn {color: purple; }
+.para {color: purple;
+      font-weight: bold;
+}
+.figure { text-align: center; }
+.caption { font-weight: bold; }
+</style>
+')
+```
+
+# Summary
+
+**What we learned from the pathway analysis (401):**
+In our previous analysis, we discovered that context-dependency is the *rule*, not
+the exception. For well-studied miRNAs like let-7a, miR-34a, and miR-362, essentially
+100% of genes show context-dependent (mixed positive/negative) correlation across
+cancer types. Even for miR-21 (the most studied oncomiR), only 14 out of 20,193
+genes (0.07%) show consistently negative correlation.
+
+**Goal of this analysis:**
+Dive deeper into specific case studies to understand *why* certain miR-gene pairs
+behave differently across cancer types. We will:
+
+1. Examine let-7a (tumor suppressor) - which cancers show strongest negative correlation?
+2. Study miR-34a (p53-regulated) - does it behave as a tumor suppressor uniformly?
+3. Extend Kevin's miR-362 example with additional functional analysis
+4. Identify cancer types that cluster by miR correlation patterns
+
+**Key Questions:**
+- Are there cancer-specific miR "signatures" in correlation patterns?
+- Do known oncogenic contexts show weaker tumor suppressor correlations?
+- Can we identify tissue-specific miR targets?
+
+# Getting Started
+
+```{r paths, message=FALSE, warning=FALSE}
+source("00-paths.R")
+
+library(ggplot2)
+library(pheatmap)
+library(RColorBrewer)
+```
+
+```{r loaddata}
+load(file.path(paths$mirtcga, "matchedNoGBM.rda"))
+load(file.path(paths$mirtcga, "cohortColors.Rda"))
+
+cat("Data loaded:\n")
+cat("  Genes:", nrow(mRNAdata), "\n")
+cat("  miRs:", nrow(miRdata), "\n")
+cat("  Samples:", ncol(mRNAdata), "\n")
+cat("  Cohorts:", paste(sort(unique(cancerType)), collapse=", "), "\n")
+```
+
+# Utility Functions
+
+I'll use the same correlation approach as before, but add functions for
+visualization and comparison across cohorts.
+
+```{r utilities}
+# Compute correlation for one miR with all genes in one cohort
+compute_cohort_cor <- function(mir_name, cohort, mRNAdata, miRdata, cancerType) {
+  idx <- cancerType == cohort
+  if (sum(idx) < 10) return(rep(NA, nrow(mRNAdata)))
+
+  mir_expr <- as.numeric(miRdata[mir_name, idx])
+  if (all(mir_expr == 0) || sd(mir_expr) == 0) return(rep(NA, nrow(mRNAdata)))
+
+  cors <- sapply(1:nrow(mRNAdata), function(i) {
+    mrna_expr <- as.numeric(mRNAdata[i, idx])
+    if (sd(mrna_expr) > 0) {
+      cor(mir_expr, mrna_expr, use = "complete.obs")
+    } else {
+      NA
+    }
+  })
+  names(cors) <- rownames(mRNAdata)
+  return(cors)
+}
+
+# Compute correlation matrix for one miR across all cohorts
+compute_mir_matrix <- function(mir_name, mRNAdata, miRdata, cancerType) {
+  cohorts <- sort(unique(as.character(cancerType)))
+  result <- matrix(NA, nrow = nrow(mRNAdata), ncol = length(cohorts),
+                   dimnames = list(rownames(mRNAdata), cohorts))
+
+  for (ct in cohorts) {
+    result[, ct] <- compute_cohort_cor(mir_name, ct, mRNAdata, miRdata, cancerType)
+  }
+  return(result)
+}
+```
+
+# Case Study 1: let-7a - The Canonical Tumor Suppressor
+
+Let-7a was one of the first discovered miRNAs and is well-established as a tumor
+suppressor. It directly targets oncogenes like RAS and HMGA2. If correlation reflects
+regulation, we should see consistent negative correlation with these targets.
+
+```{r let7a_setup}
+# Find let-7a variants
+let7a_mirs <- grep("let-7a", rownames(miRdata), value = TRUE)
+cat("Available let-7a variants:\n")
+print(let7a_mirs)
+
+# Use the 5p form (more commonly studied)
+let7a <- grep("let-7a-5p", rownames(miRdata), value = TRUE)[1]
+cat("\nUsing:", let7a, "\n")
+```
+
+```{r let7a_compute}
+cat("Computing correlations for", let7a, "across all cohorts...\n")
+let7a_cors <- compute_mir_matrix(let7a, mRNAdata, miRdata, cancerType)
+cat("Done!\n")
+```
+
+Let me first look at the distribution of correlations across all cohorts.
+
+```{r let7a_dist, fig.cap="Distribution of let-7a correlations by cancer type.", fig.width=12, fig.height=6}
+# Calculate summary statistics per cohort
+let7a_summary <- data.frame(
+  cohort = colnames(let7a_cors),
+  mean_cor = apply(let7a_cors, 2, mean, na.rm = TRUE),
+  median_cor = apply(let7a_cors, 2, median, na.rm = TRUE),
+  n_negative = apply(let7a_cors, 2, function(x) sum(x < -0.3, na.rm = TRUE)),
+  n_positive = apply(let7a_cors, 2, function(x) sum(x > 0.3, na.rm = TRUE))
+)
+
+# Which cohorts have the most negative correlations?
+cat("Cohorts ranked by genes with strong negative correlation (r < -0.3):\n")
+print(let7a_summary[order(-let7a_summary$n_negative), c("cohort", "n_negative", "n_positive")])
+```
+
+This is fascinating! Let's visualize which cohorts show the strongest tumor
+suppressor-like behavior (negative correlations).
+
+```{r let7a_barplot, fig.cap="Genes with strong let-7a correlation by cancer type.", fig.width=10, fig.height=6}
+# Melt for plotting
+let7a_plot <- let7a_summary[order(let7a_summary$n_negative), ]
+let7a_plot$cohort <- factor(let7a_plot$cohort, levels = let7a_plot$cohort)
+
+par(mfrow = c(1, 2))
+barplot(let7a_plot$n_negative, names.arg = let7a_plot$cohort, las = 2,
+        col = cohortColors[as.character(let7a_plot$cohort)],
+        main = "Genes with r < -0.3 (let-7a)", ylab = "Number of genes")
+
+barplot(let7a_plot$n_positive, names.arg = let7a_plot$cohort, las = 2,
+        col = cohortColors[as.character(let7a_plot$cohort)],
+        main = "Genes with r > 0.3 (let-7a)", ylab = "Number of genes")
+```
+
+## Known let-7a Targets
+
+Let's check if known oncogenic targets of let-7a show negative correlation.
+Classic let-7a targets include RAS genes, HMGA2, and MYC.
+
+```{r let7a_targets}
+# Known let-7a targets
+known_targets <- c("KRAS", "NRAS", "HRAS", "HMGA2", "MYC", "LIN28A", "LIN28B", "IGF2BP1", "IGF2BP2")
+
+# Check which are in our data
+available_targets <- known_targets[known_targets %in% rownames(let7a_cors)]
+cat("Available known targets:", paste(available_targets, collapse = ", "), "\n\n")
+
+# Get their correlations across cohorts
+if (length(available_targets) > 0) {
+  target_cors <- let7a_cors[available_targets, , drop = FALSE]
+
+  cat("Correlation of known let-7a targets across cohorts:\n")
+  print(round(target_cors, 3))
+
+  cat("\nSummary: proportion of cohorts with negative correlation:\n")
+  prop_neg <- apply(target_cors, 1, function(x) mean(x < 0, na.rm = TRUE))
+  print(round(prop_neg, 2))
+}
+```
+
+```{r let7a_targets_heatmap, fig.cap="Correlation of known let-7a targets across cancer types.", fig.width=12, fig.height=5}
+if (length(available_targets) > 2) {
+  # Remove NA rows/cols
+  target_cors_clean <- target_cors[, colSums(!is.na(target_cors)) > 0]
+
+  pheatmap(target_cors_clean,
+           main = "let-7a correlation with known targets",
+           color = colorRampPalette(c("blue", "white", "red"))(100),
+           breaks = seq(-1, 1, length.out = 101),
+           cluster_rows = TRUE,
+           cluster_cols = TRUE,
+           fontsize_row = 10,
+           fontsize_col = 8)
+}
+```
+
+Interesting! Even for *known* direct targets of let-7a, the correlation patterns
+are highly variable across cancer types. This strongly supports Kevin's thesis
+that context matters enormously.
+
+# Case Study 2: miR-34a - The p53 Effector
+
+miR-34a is transcriptionally activated by p53 and mediates tumor suppression.
+Its targets include CDK6, E2F3, and BCL2. Since p53 status varies across cancers,
+we might expect miR-34a to behave differently depending on p53 functionality.
+
+```{r mir34a_setup}
+mir34a <- grep("miR-34a-5p", rownames(miRdata), value = TRUE)[1]
+cat("Analyzing:", mir34a, "\n")
+
+cat("Computing correlations...\n")
+mir34a_cors <- compute_mir_matrix(mir34a, mRNAdata, miRdata, cancerType)
+cat("Done!\n")
+```
+
+```{r mir34a_summary}
+# Summary statistics
+mir34a_summary <- data.frame(
+  cohort = colnames(mir34a_cors),
+  mean_cor = apply(mir34a_cors, 2, mean, na.rm = TRUE),
+  n_strong_neg = apply(mir34a_cors, 2, function(x) sum(x < -0.3, na.rm = TRUE)),
+  n_strong_pos = apply(mir34a_cors, 2, function(x) sum(x > 0.3, na.rm = TRUE))
+)
+
+cat("miR-34a: Cohorts with most strongly correlated genes:\n")
+print(mir34a_summary[order(-mir34a_summary$n_strong_neg), ])
+```
+
+## Known miR-34a Targets
+
+```{r mir34a_targets}
+# Known miR-34a targets (cell cycle, apoptosis)
+mir34a_known <- c("CDK6", "CDK4", "E2F3", "BCL2", "NOTCH1", "MET", "SIRT1", "MYC")
+available_34a <- mir34a_known[mir34a_known %in% rownames(mir34a_cors)]
+
+cat("Checking known miR-34a targets:\n")
+if (length(available_34a) > 0) {
+  target34_cors <- mir34a_cors[available_34a, , drop = FALSE]
+  print(round(target34_cors, 3))
+
+  cat("\nProportion of cohorts with negative correlation:\n")
+  print(round(apply(target34_cors, 1, function(x) mean(x < 0, na.rm = TRUE)), 2))
+}
+```
+
+# Case Study 3: Deep Dive into miR-362 (Kevin's Example)
+
+Kevin showed that miR-362 has Cohen's kappa of 0.120 in PRAD but only 0.003 in SKCM
+for association with validated targets. Let me explore this more.
+
+```{r mir362_setup}
+mir362 <- grep("miR-362-3p", rownames(miRdata), value = TRUE)[1]
+cat("Analyzing:", mir362, "\n")
+
+mir362_cors <- compute_mir_matrix(mir362, mRNAdata, miRdata, cancerType)
+```
+
+```{r mir362_compare, fig.cap="miR-362 correlation patterns in PRAD vs SKCM.", fig.width=10, fig.height=5}
+# Compare PRAD and SKCM directly
+par(mfrow = c(1, 2))
+
+# PRAD
+hist(mir362_cors[, "PRAD"], breaks = 50, main = "miR-362 in PRAD",
+     xlab = "Correlation", col = cohortColors["PRAD"])
+abline(v = 0, col = "red", lwd = 2, lty = 2)
+
+# SKCM
+hist(mir362_cors[, "SKCM"], breaks = 50, main = "miR-362 in SKCM",
+     xlab = "Correlation", col = cohortColors["SKCM"])
+abline(v = 0, col = "red", lwd = 2, lty = 2)
+```
+
+```{r mir362_scatter, fig.cap="Comparing miR-362 correlations: PRAD vs SKCM."}
+# Scatter plot comparing the two
+plot(mir362_cors[, "PRAD"], mir362_cors[, "SKCM"],
+     pch = 16, col = rgb(0, 0, 0, 0.1), cex = 0.5,
+     xlab = "Correlation in PRAD", ylab = "Correlation in SKCM",
+     main = "miR-362: PRAD vs SKCM (each point = 1 gene)")
+abline(0, 1, col = "red", lwd = 2)
+abline(h = 0, v = 0, col = "gray", lty = 2)
+
+# Correlation between the correlation profiles
+rho <- cor(mir362_cors[, "PRAD"], mir362_cors[, "SKCM"], use = "complete.obs")
+legend("topleft", legend = paste("r =", round(rho, 3)), bty = "n", cex = 1.2)
+```
+
+The correlation between PRAD and SKCM correlation profiles is only `r round(rho, 3)`!
+This means the same miR has essentially *unrelated* correlation patterns in these
+two cancer types.
+
+## Genes with Opposite Behavior
+
+Let's identify genes where miR-362 shows opposite correlation in PRAD vs SKCM.
+
+```{r mir362_opposite}
+# Find genes that flip sign
+prad_neg_skcm_pos <- which(mir362_cors[, "PRAD"] < -0.2 & mir362_cors[, "SKCM"] > 0.2)
+prad_pos_skcm_neg <- which(mir362_cors[, "PRAD"] > 0.2 & mir362_cors[, "SKCM"] < -0.2)
+
+cat("Genes with opposite correlation patterns:\n")
+cat("  Negative in PRAD, Positive in SKCM:", length(prad_neg_skcm_pos), "\n")
+cat("  Positive in PRAD, Negative in SKCM:", length(prad_pos_skcm_neg), "\n")
+
+if (length(prad_neg_skcm_pos) > 0) {
+  cat("\nTop genes (negative PRAD, positive SKCM):\n")
+  flip_genes <- names(prad_neg_skcm_pos)
+  flip_data <- data.frame(
+    gene = flip_genes,
+    PRAD = mir362_cors[flip_genes, "PRAD"],
+    SKCM = mir362_cors[flip_genes, "SKCM"]
+  )
+  print(head(flip_data[order(flip_data$PRAD - flip_data$SKCM), ], 10))
+}
+```
+
+# Clustering Cancer Types by miR Correlation Patterns
+
+Do cancer types cluster based on how miRNAs correlate with mRNAs? This could
+reveal tissue-level regulatory patterns.
+
+```{r cluster_cohorts, fig.cap="Hierarchical clustering of cancer types by miR-21 correlation patterns.", fig.width=10, fig.height=8}
+# Use miR-21 as an example (well-expressed across all cohorts)
+mir21 <- grep("miR-21-5p", rownames(miRdata), value = TRUE)[1]
+mir21_cors <- compute_mir_matrix(mir21, mRNAdata, miRdata, cancerType)
+
+# Select top 1000 most variable genes for clustering
+gene_var <- apply(mir21_cors, 1, var, na.rm = TRUE)
+top_genes <- names(sort(gene_var, decreasing = TRUE))[1:1000]
+mir21_top <- mir21_cors[top_genes, ]
+
+# Remove cohorts with too many NAs
+valid_cohorts <- colSums(!is.na(mir21_top)) > 500
+mir21_top <- mir21_top[, valid_cohorts]
+
+# Replace remaining NAs with 0 for clustering
+mir21_top[is.na(mir21_top)] <- 0
+
+# Cluster cohorts
+pheatmap(t(mir21_top),
+         main = "Cancer cohorts clustered by miR-21 correlation patterns\n(top 1000 most variable genes)",
+         color = colorRampPalette(c("blue", "white", "red"))(100),
+         breaks = seq(-0.8, 0.8, length.out = 101),
+         show_colnames = FALSE,
+         fontsize_row = 8,
+         clustering_method = "ward.D2")
+```
+
+# Summary of Findings
+
+This case study analysis reveals several key insights:
+
+1. **Known targets don't show consistent correlation**: Even for well-established
+   direct targets of tumor suppressor miRNAs (let-7a, miR-34a), the correlation
+   patterns are highly variable across cancer types.
+
+2. **Same miR, different behavior**: miR-362 has essentially uncorrelated gene
+   correlation profiles in PRAD vs SKCM (r ≈ 0). Many genes show *opposite*
+   correlations in these two cancers.
+
+3. **Cancer types cluster by miR behavior**: When we cluster cancers by their
+   miR-gene correlation patterns, we see tissue-specific groupings, suggesting
+   that the cellular context fundamentally shapes miR-mRNA relationships.
+
+4. **Implications**: Researchers should be extremely cautious about:
+   - Assuming pan-cancer miR target predictions apply to specific cancer types
+   - Using global correlation to infer regulatory relationships
+   - Ignoring the tissue context when studying miR function
+
+These findings provide additional support for Kevin's central thesis that
+"correlation is not regulation" and that subgroup structure must be considered
+in correlation analyses.
+
+# Appendix
+```{r si}
+sessionInfo()
+```

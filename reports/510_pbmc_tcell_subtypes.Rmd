@@ -1,0 +1,63 @@
+---
+title: "PBMC T-cell Subtypes: Context Correlation Exploration"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+source("00-paths.R")
+out_dir <- file.path(paths$results, "sc", "sc_110_pbmc_tcell_subtypes")
+analysis_file <- file.path(out_dir, "analysis_ready.rds")
+summary_file <- file.path(out_dir, "summary_pairs.csv")
+ex_file <- file.path(out_dir, "top_exemplars.rds")
+
+stopifnot(file.exists(analysis_file), file.exists(summary_file), file.exists(ex_file))
+
+res <- readRDS(analysis_file)
+summary_pairs <- utils::read.csv(summary_file, stringsAsFactors = FALSE)
+exemplars <- readRDS(ex_file)
+```
+
+```{r context-table}
+res$inputs$context_table
+```
+
+```{r precomputed-curve, message=FALSE, warning=FALSE}
+library(ggplot2)
+ggplot(res$curve, aes(abs_r_global_threshold, reversal_rate, color = factor(eps))) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  coord_cartesian(ylim = c(0, 1)) +
+  theme_bw() +
+  labs(title = "Precomputed reversal-rate curve (T subtypes)", x = "|r_global| threshold", y = "Reversal rate", color = "eps")
+```
+
+```{r helper-filter}
+filter_t_pairs <- function(min_abs_r = 0.15, min_I2 = 0.4, simpson_only = TRUE) {
+  d <- summary_pairs
+  keep <- is.finite(d$r_global) & abs(d$r_global) >= min_abs_r & is.finite(d$I2) & d$I2 >= min_I2
+  if (simpson_only) keep <- keep & d$flag_simpson
+  d[keep, c("feature_x", "feature_y", "r_global", "r_resid", "flag_simpson", "I2")]
+}
+
+head(filter_t_pairs(), 20)
+```
+
+```{r helper-exemplar-bars, message=FALSE, warning=FALSE}
+plot_t_exemplar_context <- function(i = 1) {
+  stopifnot(i >= 1, i <= length(exemplars$exemplars))
+  ex <- exemplars$exemplars[[i]]
+  d <- ex$per_context
+  ggplot(d, aes(reorder(context, r_c), r_c, fill = n_c)) +
+    geom_col() +
+    coord_flip() +
+    theme_bw() +
+    labs(
+      title = paste0("T exemplar ", i, ": ", ex$pair$feature_x, " vs ", ex$pair$feature_y),
+      x = "Context",
+      y = "r_c",
+      fill = "n_c"
+    )
+}
+
+plot_t_exemplar_context(1)
+```

@@ -1,0 +1,7 @@
+{
+  "paths" : {
+      "raw"     : "C:/TCGA/raw",
+      "clean"   : "C:/TCGA/clean",
+      "scratch" : "C:/TCGA/scratch"
+  }
+}
