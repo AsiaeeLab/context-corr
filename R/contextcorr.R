@@ -74,6 +74,37 @@ heterogeneity_Q_I2 <- function(r_by_context, n_by_context) {
   list(k = k, df = df, Q = Q, p = p, I2 = I2)
 }
 
+random_effects_pool <- function(r_by_context, n_by_context) {
+  stopifnot(length(r_by_context) == length(n_by_context))
+
+  r <- as.numeric(r_by_context)
+  n <- as.numeric(n_by_context)
+
+  valid <- is.finite(r) & is.finite(n) & n >= 4 & abs(r) < 1
+  r <- r[valid]
+  n <- n[valid]
+
+  k <- length(r)
+  if (k < 2) {
+    return(list(k = k, tau2 = NA_real_, z_RE = NA_real_, r_RE = NA_real_))
+  }
+
+  w <- n - 3
+  z <- contextcorr_fisher_z(r)
+  z_bar <- sum(w * z) / sum(w)
+  Q <- sum(w * (z - z_bar) ^ 2)
+  df <- k - 1
+
+  denom <- sum(w) - sum(w ^ 2) / sum(w)
+  tau2 <- max(0, (Q - df) / denom)
+
+  wRE <- 1 / (1 / w + tau2)
+  zRE <- sum(wRE * z) / sum(wRE)
+  rRE <- contextcorr_inv_fisher_z(zRE)
+
+  list(k = k, tau2 = tau2, z_RE = zRE, r_RE = rRE)
+}
+
 mean_residualized_cor <- function(expr_x, expr_y, context, method = c("pearson", "spearman")) {
   method <- match.arg(method)
   stopifnot(length(expr_x) == length(expr_y), length(expr_x) == length(context))
