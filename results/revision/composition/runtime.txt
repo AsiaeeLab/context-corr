@@ -1,0 +1,16 @@
+total_seconds	427.4
+external_files	0.2
+load_data	26.0
+covariates	68.3
+conditions	153.9
+bootstrap	107.7
+tables	69.4
+figure	1.8
+n_cores	24
+B	500
+G	5000
+M	200
+quick	FALSE
+R	R version 4.6.1 (2026-06-24)
+estimate_pkg	1.0.13
+date	2026-09-03 13:25:30 CDT

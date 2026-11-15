@@ -1,0 +1,120 @@
+"setting","context","n","retained"
+"TCGA","ACC",79,TRUE
+"TCGA","BLCA",424,TRUE
+"TCGA","BRCA",847,TRUE
+"TCGA","CESC",309,TRUE
+"TCGA","CHOL",45,TRUE
+"TCGA","COAD",221,TRUE
+"TCGA","DLBC",47,TRUE
+"TCGA","ESCA",195,TRUE
+"TCGA","HNSC",524,TRUE
+"TCGA","KICH",91,TRUE
+"TCGA","KIRC",326,TRUE
+"TCGA","KIRP",323,TRUE
+"TCGA","LGG",526,TRUE
+"TCGA","LIHC",419,TRUE
+"TCGA","LUAD",469,TRUE
+"TCGA","LUSC",380,TRUE
+"TCGA","MESO",87,TRUE
+"TCGA","OV",291,TRUE
+"TCGA","PAAD",183,TRUE
+"TCGA","PCPG",187,TRUE
+"TCGA","PRAD",546,TRUE
+"TCGA","READ",76,TRUE
+"TCGA","SARC",261,TRUE
+"TCGA","SKCM",451,TRUE
+"TCGA","STAD",405,TRUE
+"TCGA","TGCT",156,TRUE
+"TCGA","THCA",567,TRUE
+"TCGA","THYM",122,TRUE
+"TCGA","UCEC",197,TRUE
+"TCGA","UCS",56,TRUE
+"TCGA","UVM",80,TRUE
+"BRCA_PAM50","Basal",84,TRUE
+"BRCA_PAM50","Her2",43,TRUE
+"BRCA_PAM50","LumA",252,TRUE
+"BRCA_PAM50","LumB",115,TRUE
+"BRCA_PAM50","Normal",16,FALSE
+"BRCA_IHC","HER2+",67,TRUE
+"BRCA_IHC","HR+",269,TRUE
+"BRCA_IHC","TNBC",67,TRUE
+"GTEx","Muscle - Skeletal",396,TRUE
+"GTEx","Whole Blood",337,TRUE
+"GTEx","Skin - Sun Exposed (Lower leg)",324,TRUE
+"GTEx","Adipose - Subcutaneous",318,TRUE
+"GTEx","Lung",287,TRUE
+"GTEx","Artery - Tibial",281,TRUE
+"GTEx","Nerve - Tibial",278,TRUE
+"GTEx","Thyroid",278,TRUE
+"GTEx","Esophagus - Mucosa",271,TRUE
+"GTEx","Cells - Cultured fibroblasts",256,TRUE
+"GTEx","Esophagus - Muscularis",243,TRUE
+"GTEx","Skin - Not Sun Exposed (Suprapubic)",233,TRUE
+"GTEx","Artery - Aorta",205,TRUE
+"GTEx","Heart - Left Ventricle",202,TRUE
+"GTEx","Adipose - Visceral (Omentum)",197,TRUE
+"GTEx","Breast - Mammary Tissue",179,TRUE
+"GTEx","Heart - Atrial Appendage",174,TRUE
+"GTEx","Stomach",173,TRUE
+"GTEx","Pancreas",165,TRUE
+"GTEx","Testis",165,TRUE
+"GTEx","Colon - Transverse",164,FALSE
+"GTEx","Colon - Sigmoid",140,FALSE
+"GTEx","Esophagus - Gastroesophageal Junction",137,FALSE
+"GTEx","Adrenal Gland",127,FALSE
+"GTEx","Artery - Coronary",118,FALSE
+"GTEx","Brain - Cerebellum",118,FALSE
+"GTEx","Liver",110,FALSE
+"GTEx","Brain - Caudate (basal ganglia)",109,FALSE
+"GTEx","Cells - EBV-transformed lymphocytes",107,FALSE
+"GTEx","Pituitary",107,FALSE
+"GTEx","Brain - Cortex",105,FALSE
+"GTEx","Brain - Nucleus accumbens (basal ganglia)",103,FALSE
+"GTEx","Brain - Frontal Cortex (BA9)",101,FALSE
+"GTEx","Prostate",100,FALSE
+"GTEx","Spleen",99,FALSE
+"GTEx","Brain - Cerebellar Hemisphere",97,FALSE
+"GTEx","Small Intestine - Terminal Ileum",92,FALSE
+"GTEx","Ovary",88,FALSE
+"GTEx","Brain - Hippocampus",84,FALSE
+"GTEx","Vagina",84,FALSE
+"GTEx","Brain - Anterior cingulate cortex (BA24)",83,FALSE
+"GTEx","Brain - Hypothalamus",82,FALSE
+"GTEx","Brain - Putamen (basal ganglia)",79,FALSE
+"GTEx","Uterus",78,FALSE
+"GTEx","Brain - Amygdala",68,FALSE
+"GTEx","Brain - Spinal cord (cervical c-1)",60,FALSE
+"GTEx","Brain - Substantia nigra",57,FALSE
+"GTEx","Minor Salivary Gland",55,FALSE
+"GTEx","Kidney - Cortex",27,FALSE
+"GTEx","Bladder",9,FALSE
+"GTEx","Cervix - Ectocervix",6,FALSE
+"GTEx","Fallopian Tube",5,FALSE
+"GTEx","Cervix - Endocervix",4,FALSE
+"PBMC","B",366,TRUE
+"PBMC","DC",25,FALSE
+"PBMC","Mono",641,TRUE
+"PBMC","NK",211,TRUE
+"PBMC","Other",4,FALSE
+"PBMC","Platelet",15,FALSE
+"PBMC","T",1437,TRUE
+"CITEseq","0",1678,TRUE
+"CITEseq","1",1106,TRUE
+"CITEseq","10",209,TRUE
+"CITEseq","11",192,FALSE
+"CITEseq","12",162,FALSE
+"CITEseq","13",136,FALSE
+"CITEseq","14",114,FALSE
+"CITEseq","15",100,FALSE
+"CITEseq","16",97,FALSE
+"CITEseq","17",84,FALSE
+"CITEseq","18",67,FALSE
+"CITEseq","19",44,FALSE
+"CITEseq","2",1077,TRUE
+"CITEseq","3",744,TRUE
+"CITEseq","4",433,TRUE
+"CITEseq","5",415,TRUE
+"CITEseq","6",392,TRUE
+"CITEseq","7",327,TRUE
+"CITEseq","8",212,TRUE
+"CITEseq","9",209,TRUE

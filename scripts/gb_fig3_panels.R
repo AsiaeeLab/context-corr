@@ -37,9 +37,7 @@ theme_panel <- theme_bw(base_size = 10) +
 # Panel A: GTEx RTKN2 vs RNASE3
 # ===========================================================================
 make_gtex_panel <- function() {
-  f2 <- file.path(paths$mirtcga, "xena-gtex.Rda")
-  f1 <- "/home/amir/datasets/mirTCGA/clean/xena-gtex.Rda"
-  f <- if (file.exists(f1)) f1 else f2
+  f <- file.path(paths$mirtcga, "xena-gtex.Rda")
   message("Loading GTEx: ", f)
   e <- new.env()
   load(f, envir = e)
@@ -51,16 +49,12 @@ make_gtex_panel <- function() {
   # sample ID. The 4-digit field in the sample barcode is NOT tissue (it is an
   # aliquot/collection-order number that spans many tissues). Cache a copy of
   # the annotation locally.
-  attr_local <- "/home/amir/datasets/context/clean/GTEx_SampleAttributes_v8.txt"
+  attr_local <- Sys.getenv("GTEX_ATTRIBUTES", file.path(paths$mirtcga, "GTEx_SampleAttributes_v8.txt"))
   attr_url <- paste0("https://storage.googleapis.com/adult-gtex/annotations/v8/",
                      "metadata-files/GTEx_Analysis_v8_Annotations_SampleAttributesDS.txt")
   if (!file.exists(attr_local)) {
     dir.create(dirname(attr_local), recursive = TRUE, showWarnings = FALSE)
-    if (file.exists("/tmp/gtex_attr.txt")) {
-      file.copy("/tmp/gtex_attr.txt", attr_local)
-    } else {
-      utils::download.file(attr_url, attr_local, quiet = TRUE)
-    }
+    utils::download.file(attr_url, attr_local, quiet = TRUE)
   }
   attr <- utils::read.delim(attr_local, stringsAsFactors = FALSE, quote = "")
   samp_dash <- gsub("\\.", "-", colnames(X))

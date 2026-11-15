@@ -1,0 +1,17 @@
+"row_id","quantity","value","numerator","denominator"
+"F01","n_baseline_reversals",32321,NA,NA
+"F02","n_baseline_reversals_with_determinate_q_gated_majority",28875,NA,NA
+"F03","n_baseline_reversals_majority_holds_q_gated",22185,NA,NA
+"F04","frac_majority_holds_among_determinate_q_gated",0.768311688311688,22185,28875
+"F05","frac_baseline_reversals_surviving_q_gated",0.686395841712818,22185,32321
+"F06","n_baseline_reversals_flipped_to_global_sign_q_gated",6690,NA,NA
+"F07","n_baseline_reversals_tie_or_no_vote_q_gated",3446,NA,NA
+"F08","n_baseline_reversals_with_zero_q_significant_cohorts",10,NA,NA
+"F09","overall_reversal_rate_q_gated_rg_ge_0.2",0.125319725109426,30034,239659
+"F10","n_eligible_q_gated_rg_ge_0.2",239659,NA,NA
+"F11","overall_reversal_rate_q_gated_all_rg",0.302635717836158,281897,931473
+"F12","overall_reversal_rate_nominal_p_gated_rg_ge_0.2",0.125210216305329,30228,241418
+"F13","n_eligible_nominal_p_gated_rg_ge_0.2",241418,NA,NA
+"F14","overall_reversal_rate_nominal_p_gated_all_rg",0.301870721239623,284585,942738
+"F15","frac_baseline_reversals_surviving_nominal_p_gated",0.727731196435754,23521,32321
+"F16","frac_measurable_cells_with_q_lt_0.05",0.34467189121433,10638584,30865830

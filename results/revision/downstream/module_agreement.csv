@@ -1,0 +1,4 @@
+"input_a","input_b","n_genes","ari_all_genes_unassigned_as_module","n_genes_assigned_in_both","ari_assigned_in_both","n_modules_a","n_modules_b","n_unassigned_a","n_unassigned_b","largest_module_a","largest_module_b","power","network_type","min_module_size","deep_split"
+"pooled","residualized",2000,0.0885079072644779,793,0.369201780112932,13,5,52,1204,349,229,5,"signed hybrid",30,2
+"pooled","RE_pooled",2000,0.0882859647072655,860,0.307065708702345,13,6,52,1135,349,241,5,"signed hybrid",30,2
+"residualized","RE_pooled",2000,0.655856210645273,696,0.925520243274148,5,6,1204,1135,229,241,5,"signed hybrid",30,2

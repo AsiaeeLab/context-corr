@@ -1,0 +1,5 @@
+"row_id","group","n_pairs","frac_majority_stable_ge_0.9","median_majority_stability","q25_majority_stability","q75_majority_stability","mean_majority_stability","frac_reversal_flag_ge_0.9","median_reversal_flag_frequency","mean_reversal_flag_frequency"
+"T01","baseline reversals (|r_global| >= 0.2)",32321,0.485040685622351,0.885,0.675,0.995,0.809569010859812,0.413291667955818,0.835,0.773993843012283
+"T02","baseline concordant (|r_global| >= 0.2)",211327,0.865800394649051,1,0.985,1,0.954970117400995,0,0,0.0261355151021876
+"T03","all |r_global| >= 0.2 pairs (incl. ties)",249596,0.795862113174891,1,0.945,1,0.916659181236879,0.0535264988220965,0,0.131475905062581
+"T04","all high-variance pairs",1000000,0.668097,0.985,0.81,1,0.86339924,0.01336,0,0.0341793049999999

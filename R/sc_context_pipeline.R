@@ -611,7 +611,15 @@ sc_compute_pair_statistics_slow <- function(
     r_ctx_use <- r_ctx
     r_ctx_use[!use_ctx] <- NA_real_
 
-    sf <- simpson_flag(cc$r_global, r_ctx_use, eps = eps, majority = majority)
+    retained <- is.finite(x) & is.finite(y) & !is.na(context) &
+      as.character(context) %in% names(use_ctx)[use_ctx]
+    r_global_use <- if (sum(retained) >= 2L) {
+      suppressWarnings(stats::cor(x[retained], y[retained], method = method))
+    } else {
+      NA_real_
+    }
+
+    sf <- simpson_flag(r_global_use, r_ctx_use, eps = eps, majority = majority)
     ht <- heterogeneity_Q_I2(r_ctx_use, n_ctx)
 
     ctx_ok <- as.character(context)
@@ -622,7 +630,7 @@ sc_compute_pair_statistics_slow <- function(
 
     used <- is.finite(r_ctx_use)
 
-    r_global[i] <- cc$r_global
+    r_global[i] <- r_global_use
     r_resid[i] <- r_res
     flag_simpson[i] <- isTRUE(sf$flag)
     majority_sign[i] <- as.integer(sf$majority_sign)
@@ -730,21 +738,27 @@ sc_compute_pair_statistics_fast_pearson <- function(
   n_ctx_mat <- matrix(NA_integer_, nrow = n_pairs, ncol = k_ctx, dimnames = list(NULL, context_levels))
   for (j in seq_len(k_ctx)) n_ctx_mat[, j] <- n_by_context[j]
 
-  # Global correlations.
-  zx <- sc_row_zscore_matrix(expr_x)
-  zy <- if (identical(expr_x, expr_y)) zx else sc_row_zscore_matrix(expr_y)
-
   idx_x <- pairs$idx_x
   idx_y <- pairs$idx_y
 
+  # Every estimand uses the same retained-context population. In particular,
+  # contexts below n_min are excluded from the pooled correlation as well as
+  # from the within-context and residualized correlations.
+  good_levels <- context_levels[n_by_context >= n_min]
+  keep_cells <- which(as.character(context) %in% good_levels)
+
   n_chunks <- ceiling(n_pairs / chunk_size)
-  for (ch in seq_len(n_chunks)) {
-    a <- (ch - 1L) * chunk_size + 1L
-    b <- min(n_pairs, ch * chunk_size)
-    ii <- a:b
-    r_global[ii] <- sc_pairwise_cor_from_z(zx, zy, idx_x[ii], idx_y[ii])
-    if (ch == 1L || (b %% progress_every) == 0L || b == n_pairs) {
-      message(sprintf("Global correlations: %d/%d pairs", b, n_pairs))
+  if (length(keep_cells) >= 2L) {
+    zx <- sc_row_zscore_matrix(expr_x[, keep_cells, drop = FALSE])
+    zy <- if (identical(expr_x, expr_y)) zx else sc_row_zscore_matrix(expr_y[, keep_cells, drop = FALSE])
+    for (ch in seq_len(n_chunks)) {
+      a <- (ch - 1L) * chunk_size + 1L
+      b <- min(n_pairs, ch * chunk_size)
+      ii <- a:b
+      r_global[ii] <- sc_pairwise_cor_from_z(zx, zy, idx_x[ii], idx_y[ii])
+      if (ch == 1L || (b %% progress_every) == 0L || b == n_pairs) {
+        message(sprintf("Global correlations: %d/%d pairs", b, n_pairs))
+      }
     }
   }
 
@@ -772,8 +786,6 @@ sc_compute_pair_statistics_fast_pearson <- function(
   }
 
   # Residualized correlations: exclude contexts with n < n_min (matches mean_residualized_cor usage in slow path).
-  good_levels <- context_levels[n_by_context >= n_min]
-  keep_cells <- which(as.character(context) %in% good_levels)
   if (length(keep_cells) >= 4) {
     ctx_keep <- droplevels(context[keep_cells])
     x_keep <- expr_x[, keep_cells, drop = FALSE]
@@ -883,10 +895,20 @@ sc_compute_pair_statistics_fast_pearson <- function(
       r_ctx_use <- cc$r_by_context
       r_ctx_use[cc$n_by_context < n_min] <- NA_real_
 
-      if (is.finite(cc$r_global) && is.finite(r_global[i])) {
-        if (abs(cc$r_global - r_global[i]) > validate_tol) {
+      retained <- is.finite(x) & is.finite(y) & !is.na(context) &
+        as.character(context) %in% names(cc$n_by_context)[cc$n_by_context >= n_min]
+      r_global_slow <- if (sum(retained) >= 2L) {
+        suppressWarnings(stats::cor(x[retained], y[retained], method = "pearson"))
+      } else {
+        NA_real_
+      }
+
+      if (is.finite(r_global_slow) && is.finite(r_global[i])) {
+        if (abs(r_global_slow - r_global[i]) > validate_tol) {
           stop("Fast/slow mismatch on r_global at pair ", i, call. = FALSE)
         }
+      } else if (is.finite(r_global_slow) != is.finite(r_global[i])) {
+        stop("Fast/slow finite-status mismatch on r_global at pair ", i, call. = FALSE)
       }
 
       fast_vec <- as.numeric(r_ctx_mat[i, ])
@@ -897,7 +919,7 @@ sc_compute_pair_statistics_fast_pearson <- function(
         stop("Fast/slow mismatch on r_by_context at pair ", i, call. = FALSE)
       }
 
-      sf <- simpson_flag(cc$r_global, r_ctx_use, eps = eps, majority = majority)
+      sf <- simpson_flag(r_global_slow, r_ctx_use, eps = eps, majority = majority)
       if (!identical(isTRUE(sf$flag), isTRUE(flag_simpson[i]))) stop("Fast/slow mismatch on simpson_flag at pair ", i, call. = FALSE)
 
       ht <- heterogeneity_Q_I2(r_ctx_use, cc$n_by_context)

@@ -1,0 +1,12 @@
+total_seconds	286.3
+load_data	2.9
+features_pairs	2.0
+cell_level	20.2
+per_donor	46.1
+donor_replication	18.0
+pseudobulk	190.9
+pbmc3k_reference	0.0
+figure	1.6
+n_cores	24
+quick_mode	FALSE
+finished	2026-09-04 13:12:38

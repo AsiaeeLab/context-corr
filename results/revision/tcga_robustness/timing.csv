@@ -1,0 +1,17 @@
+"row_id","step","seconds"
+"X01","load_data",17.7
+"X02","a_cohort_sizes",0
+"X03","standardize_by_cohort",9.7
+"X04","hv_full_data",49.2
+"X05","genome_wide_pass",31
+"X06","f_measurability",0.8
+"X07","per_cohort_pvalues",9.3
+"X08","d_context_switching",21.7
+"X09","rule_ingredients",4.5
+"X10","e_fdr_gated",0.6
+"X11","gw_subsample_point",49.9
+"X12","b_sample_level_bootstrap",447.3
+"X13","b_pair_level_bootstrap",34.1
+"X14","c_reversal_rules",1.7
+"X15","save",7.2
+"X99","total",685

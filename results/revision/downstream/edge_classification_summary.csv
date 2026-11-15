@@ -1,0 +1,17 @@
+"set","label","n","fraction"
+"top10000_pooled","globally_robust",6672,0.6672
+"top10000_pooled","compositional",3,3e-04
+"top10000_pooled","context_switching",818,0.0818
+"top10000_pooled","indeterminate",2507,0.2507
+"top10000_residualized","globally_robust",7410,0.741
+"top10000_residualized","compositional",5,5e-04
+"top10000_residualized","context_switching",763,0.0763
+"top10000_residualized","indeterminate",1822,0.1822
+"top10000_RE_pooled","globally_robust",7242,0.7242
+"top10000_RE_pooled","compositional",16,0.0016
+"top10000_RE_pooled","context_switching",826,0.0826
+"top10000_RE_pooled","indeterminate",1916,0.1916
+"random_subsample","globally_robust",1631,0.0543666666666667
+"random_subsample","compositional",3308,0.110266666666667
+"random_subsample","context_switching",15690,0.523
+"random_subsample","indeterminate",9371,0.312366666666667

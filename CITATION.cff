@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this code, please cite the accompanying paper."
-title: "context-corr: code for 'Context-dependent correlations mislead transcriptomic network inference in bulk and single-cell data'"
+title: "context-corr: code for 'Context-dependent correlation reversals in transcriptomic network inference across bulk and single-cell data'"
 authors:
   - family-names: Asiaee
     given-names: Amir
@@ -26,8 +26,8 @@ authors:
 license: MIT
 repository-code: "https://github.com/AsiaeeLab/context-corr"
 preferred-citation:
-  type: article
-  title: "Context-dependent correlations mislead transcriptomic network inference in bulk and single-cell data"
+  type: unpublished
+  title: "Context-dependent correlation reversals in transcriptomic network inference across bulk and single-cell data"
   authors:
     - family-names: Asiaee
       given-names: Amir
@@ -43,5 +43,5 @@ preferred-citation:
       given-names: Lynne V.
     - family-names: Coombes
       given-names: Kevin R.
-  journal: "Genome Biology"
+  notes: "Manuscript under revision at BMC Genomics"
   year: 2026

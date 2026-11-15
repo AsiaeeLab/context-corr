@@ -1,0 +1,41 @@
+null_simulation.R finished 2026-09-03 12:21:45
+QUICK mode: FALSE
+cores used (mclapply): 20
+pairs per scenario: 20000; scenarios: 36
+downsampling: 100000 pairs, 20 replicates per n, n in {20, 36, 50, 100}
+total wall time: 108.2 s (1.8 min)
+section wall times (s):
+  load_data                  13.9
+  meanshift_empirical         2.4
+  tcga_reference             25.6
+  null_simulation            22.1
+  downsampling_tcga          44.1
+  figure                      0.1
+
+R version 4.6.1 (2026-06-24)
+Platform: x86_64-pc-linux-gnu
+Running under: Ubuntu 22.04.5 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.10.0 
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.10.0  LAPACK version 3.10.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: America/Chicago
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] rjson_0.2.23
+
+loaded via a namespace (and not attached):
+[1] compiler_4.6.1 parallel_4.6.1

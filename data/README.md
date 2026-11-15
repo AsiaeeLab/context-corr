@@ -1,6 +1,6 @@
 # Obtaining the raw data
 
-None of the raw datasets are shipped with this release. Each table below points to its public source and tells you where to place the file so the scripts find it (paths are resolved through `~/Paths/context.json`).
+Raw expression datasets are not shipped with this release. Paths are resolved through `CONTEXT_PATHS` or `~/Paths/context.json`; see `context-paths.example.json`. Saved result tables and selected pairwise summaries are included under `results/`.
 
 ## TCGA matched miRNA + mRNA (the heaviest input)
 
@@ -27,31 +27,41 @@ The Xena "TCGA TARGET GTEx" expression matrix (values in `log2(TPM + 0.001)`) is
 
 - <https://xenabrowser.net/datapages/?dataset=TcgaTargetGtex_RSEM_Hugo_norm_count>
 
-Tissue-of-origin labels come from the GTEx v8 sample annotations (the `SMTSD` field, joined on sample identifier). Save the resulting object as `xena-gtex.Rda` (containing `gtex$mrna`, a 19069×7792 data frame) under `paths$mirtcga`.
+Tissue-of-origin labels come from the GTEx v8 sample annotations (the `SMTSD` field, joined on sample identifier). Save the expression object as `xena-gtex.Rda` (containing `gtex$mrna`, a 19069×7792 data frame) under `paths$mirtcga`. Save `GTEx_SampleAttributes_v8.txt` in the same directory, or set `GTEX_ATTRIBUTES` to its full path. The revised analysis uses the 20 retained SMTSD tissues for both feature selection and correlation estimation.
 
 ## PBMC 3k scRNA-seq
 
-Auto-downloaded from `SeuratData`. No manual step:
+The paper's input is the 10x Genomics PBMC 3k dataset. The loader accepts a Seurat object at `<scratch>/sc_inputs/pbmc_scrna.rds`. It can also use an installed SeuratData PBMC 3k object:
 
 ```r
 install.packages("SeuratData", repos = "https://satijalab.r-universe.dev")
 SeuratData::InstallData("pbmc3k")
 ```
 
-Then `R/sc_datasets.R::load_pbmc_scrna()` will find it.
+The analysis scripts call `load_pbmc_scrna(auto_download = FALSE)`, so install the dataset or prepare the local object before running them. For exact numerical reproduction, retain the paper's raw PBMC 3k cells and apply the quality-control settings in the scripts.
 
 ## CITE-seq (PBMC, RNA + ADT)
 
-The paper analyses 7,798 cells after QC from a PBMC CITE-seq dataset (Stoeckius et al., 2017). The release loader (`R/sc_datasets.R::load_pbmc_citeseq`) looks first for a local Seurat object at `<scratch>/sc_inputs/pbmc_citeseq.rds`, then falls back to the `SeuratData` candidates `bmcite` and `pbmcmultimodal`.
+The paper uses the **10x Genomics PBMC 10k with TotalSeq-B antibodies**, dataset `pbmc_10k_protein_v3`, with 7,798 cells after QC. Stoeckius et al. (2017) is the reference for the CITE-seq method, not the accession for this input. Prepare a Seurat object containing the RNA and ADT count assays and save it at `<scratch>/sc_inputs/pbmc_citeseq.rds`. The loader looks there first, then checks installed SeuratData candidates `bmcite` and `pbmcmultimodal`.
 
-If you do not already have the exact dataset, the simplest fallback is:
+For testing the pipeline on alternative data only:
 
 ```r
 SeuratData::InstallData("bmcite")     # or
 SeuratData::InstallData("pbmcmultimodal")
 ```
 
-These are not numerically identical to the paper's input, but they reproduce the qualitative protein–RNA-context pattern.
+These alternatives are not the paper's input and must not be used to claim reproduction of its numerical results.
+
+## Multi-donor PBMC
+
+`scripts/revision/multidonor.R` downloads GEO **GSE96583 batch 2**, control GSM2560248 and IFN-beta-stimulated GSM2560249, plus the accompanying donor/cell-type metadata. Downloads and processed Seurat objects are cached locally. The processed tables and pairwise summaries are included in `results/revision/multidonor/`.
+
+## Composition and network references
+
+`scripts/revision/composition.R` obtains the public TCGA PanCanAtlas leukocyte fractions, CIBERSORT fractions and ABSOLUTE purity estimates from GDC and calculates ESTIMATE scores. The script records the exact source URLs and covariate definitions. It requires the `estimate` package.
+
+`scripts/revision/downstream.R` downloads STRING v12.0 human physical links and TRRUST v2 human TF-target relationships. The downloaded databases remain in local caches; the resulting benchmark tables are included. These are exploratory reference comparisons, not a perturbational validation dataset.
 
 ## miRTarBase v10
 

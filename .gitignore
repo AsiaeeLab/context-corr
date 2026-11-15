@@ -27,3 +27,26 @@ data/raw/
 results/cache/brca_subtype_PAM50.rds
 results/cache/brca_subtype_IHC.rds
 results/cache/robustness_signflip.rds
+
+# Local configuration, raw downloads, and regenerated intermediate objects
+context-paths.json
+results/revision/**/cache/
+results/revision/**/REPORT.md
+results/revision/**/run_log.txt
+results/revision/**/edges_all.rds
+results/revision/**/genie3_weights.rds
+results/revision/**/pair_summaries.rds
+results/revision/**/pair_level_key_conditions.rds
+results/revision/**/null_pairs.rds
+results/revision/**/meanshift_sampled_pairs.rds
+
+# Private development notes and local editor state
+.codex/
+.claude/
+.vscode/
+AGENTS.md
+CLAUDE.md
+PROGRESS.md
+TODO.md
+REPORT.md
+results/methods_factsheet.md

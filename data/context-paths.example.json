@@ -1,0 +1,7 @@
+{
+  "paths": {
+    "mirtcga": "/absolute/path/to/tcga-and-gtex/clean",
+    "scratch": "/absolute/path/to/scratch",
+    "results": "results"
+  }
+}

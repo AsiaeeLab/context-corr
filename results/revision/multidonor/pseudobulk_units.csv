@@ -1,0 +1,169 @@
+"unit_set","unit","donor","condition","cell_type","n_cells","library_size"
+"donor_x_cell_type","D101|B cells","D101",NA,"B cells",242,289878
+"donor_x_cell_type","D101|CD14+ Monocytes","D101",NA,"CD14+ Monocytes",455,1251235
+"donor_x_cell_type","D101|CD4 T cells","D101",NA,"CD4 T cells",675,804943
+"donor_x_cell_type","D101|CD8 T cells","D101",NA,"CD8 T cells",179,191218
+"donor_x_cell_type","D101|Dendritic cells","D101",NA,"Dendritic cells",55,185383
+"donor_x_cell_type","D101|FCGR3A+ Monocytes","D101",NA,"FCGR3A+ Monocytes",224,616769
+"donor_x_cell_type","D101|Megakaryocytes","D101",NA,"Megakaryocytes",20,35712
+"donor_x_cell_type","D101|NK cells","D101",NA,"NK cells",174,159967
+"donor_x_cell_type","D1015|B cells","D1015",NA,"B cells",794,989300
+"donor_x_cell_type","D1015|CD14+ Monocytes","D1015",NA,"CD14+ Monocytes",1450,3367398
+"donor_x_cell_type","D1015|CD4 T cells","D1015",NA,"CD4 T cells",1582,1917117
+"donor_x_cell_type","D1015|CD8 T cells","D1015",NA,"CD8 T cells",312,357343
+"donor_x_cell_type","D1015|Dendritic cells","D1015",NA,"Dendritic cells",60,213536
+"donor_x_cell_type","D1015|FCGR3A+ Monocytes","D1015",NA,"FCGR3A+ Monocytes",480,1165451
+"donor_x_cell_type","D1015|Megakaryocytes","D1015",NA,"Megakaryocytes",40,68955
+"donor_x_cell_type","D1015|NK cells","D1015",NA,"NK cells",372,392511
+"donor_x_cell_type","D1016|B cells","D1016",NA,"B cells",242,296192
+"donor_x_cell_type","D1016|CD14+ Monocytes","D1016",NA,"CD14+ Monocytes",698,1429346
+"donor_x_cell_type","D1016|CD4 T cells","D1016",NA,"CD4 T cells",775,847829
+"donor_x_cell_type","D1016|CD8 T cells","D1016",NA,"CD8 T cells",1025,981751
+"donor_x_cell_type","D1016|Dendritic cells","D1016",NA,"Dendritic cells",34,108054
+"donor_x_cell_type","D1016|FCGR3A+ Monocytes","D1016",NA,"FCGR3A+ Monocytes",243,564829
+"donor_x_cell_type","D1016|NK cells","D1016",NA,"NK cells",323,299641
+"donor_x_cell_type","D1039|B cells","D1039",NA,"B cells",65,99885
+"donor_x_cell_type","D1039|CD14+ Monocytes","D1039",NA,"CD14+ Monocytes",262,692901
+"donor_x_cell_type","D1039|CD4 T cells","D1039",NA,"CD4 T cells",454,570973
+"donor_x_cell_type","D1039|CD8 T cells","D1039",NA,"CD8 T cells",55,56074
+"donor_x_cell_type","D1039|Dendritic cells","D1039",NA,"Dendritic cells",26,76959
+"donor_x_cell_type","D1039|FCGR3A+ Monocytes","D1039",NA,"FCGR3A+ Monocytes",74,229411
+"donor_x_cell_type","D1039|NK cells","D1039",NA,"NK cells",41,45301
+"donor_x_cell_type","D107|B cells","D107",NA,"B cells",98,125032
+"donor_x_cell_type","D107|CD14+ Monocytes","D107",NA,"CD14+ Monocytes",378,905966
+"donor_x_cell_type","D107|CD4 T cells","D107",NA,"CD4 T cells",344,425806
+"donor_x_cell_type","D107|CD8 T cells","D107",NA,"CD8 T cells",35,34961
+"donor_x_cell_type","D107|Dendritic cells","D107",NA,"Dendritic cells",22,75657
+"donor_x_cell_type","D107|FCGR3A+ Monocytes","D107",NA,"FCGR3A+ Monocytes",69,178811
+"donor_x_cell_type","D107|NK cells","D107",NA,"NK cells",86,82165
+"donor_x_cell_type","D1244|B cells","D1244",NA,"B cells",209,285139
+"donor_x_cell_type","D1244|CD14+ Monocytes","D1244",NA,"CD14+ Monocytes",705,1691167
+"donor_x_cell_type","D1244|CD4 T cells","D1244",NA,"CD4 T cells",1922,2448018
+"donor_x_cell_type","D1244|CD8 T cells","D1244",NA,"CD8 T cells",90,103629
+"donor_x_cell_type","D1244|Dendritic cells","D1244",NA,"Dendritic cells",80,267723
+"donor_x_cell_type","D1244|FCGR3A+ Monocytes","D1244",NA,"FCGR3A+ Monocytes",91,258717
+"donor_x_cell_type","D1244|Megakaryocytes","D1244",NA,"Megakaryocytes",27,40345
+"donor_x_cell_type","D1244|NK cells","D1244",NA,"NK cells",219,211645
+"donor_x_cell_type","D1256|B cells","D1256",NA,"B cells",424,524540
+"donor_x_cell_type","D1256|CD14+ Monocytes","D1256",NA,"CD14+ Monocytes",765,1976096
+"donor_x_cell_type","D1256|CD4 T cells","D1256",NA,"CD4 T cells",1955,2440090
+"donor_x_cell_type","D1256|CD8 T cells","D1256",NA,"CD8 T cells",243,256572
+"donor_x_cell_type","D1256|Dendritic cells","D1256",NA,"Dendritic cells",58,179240
+"donor_x_cell_type","D1256|FCGR3A+ Monocytes","D1256",NA,"FCGR3A+ Monocytes",166,498638
+"donor_x_cell_type","D1256|Megakaryocytes","D1256",NA,"Megakaryocytes",31,45168
+"donor_x_cell_type","D1256|NK cells","D1256",NA,"NK cells",492,449707
+"donor_x_cell_type","D1488|B cells","D1488",NA,"B cells",497,671271
+"donor_x_cell_type","D1488|CD14+ Monocytes","D1488",NA,"CD14+ Monocytes",642,1261311
+"donor_x_cell_type","D1488|CD4 T cells","D1488",NA,"CD4 T cells",2666,3269608
+"donor_x_cell_type","D1488|CD8 T cells","D1488",NA,"CD8 T cells",101,115819
+"donor_x_cell_type","D1488|Dendritic cells","D1488",NA,"Dendritic cells",97,320833
+"donor_x_cell_type","D1488|FCGR3A+ Monocytes","D1488",NA,"FCGR3A+ Monocytes",245,583097
+"donor_x_cell_type","D1488|Megakaryocytes","D1488",NA,"Megakaryocytes",47,62733
+"donor_x_cell_type","D1488|NK cells","D1488",NA,"NK cells",284,255714
+"donor_x_condition_x_cell_type","D101|ctrl|B cells","D101","ctrl","B cells",107,127183
+"donor_x_condition_x_cell_type","D101|ctrl|CD14+ Monocytes","D101","ctrl","CD14+ Monocytes",202,524723
+"donor_x_condition_x_cell_type","D101|ctrl|CD4 T cells","D101","ctrl","CD4 T cells",293,339937
+"donor_x_condition_x_cell_type","D101|ctrl|CD8 T cells","D101","ctrl","CD8 T cells",74,74507
+"donor_x_condition_x_cell_type","D101|ctrl|Dendritic cells","D101","ctrl","Dendritic cells",21,76496
+"donor_x_condition_x_cell_type","D101|ctrl|FCGR3A+ Monocytes","D101","ctrl","FCGR3A+ Monocytes",80,216343
+"donor_x_condition_x_cell_type","D101|ctrl|NK cells","D101","ctrl","NK cells",70,62680
+"donor_x_condition_x_cell_type","D101|stim|B cells","D101","stim","B cells",135,162695
+"donor_x_condition_x_cell_type","D101|stim|CD14+ Monocytes","D101","stim","CD14+ Monocytes",253,726512
+"donor_x_condition_x_cell_type","D101|stim|CD4 T cells","D101","stim","CD4 T cells",382,465006
+"donor_x_condition_x_cell_type","D101|stim|CD8 T cells","D101","stim","CD8 T cells",105,116711
+"donor_x_condition_x_cell_type","D101|stim|Dendritic cells","D101","stim","Dendritic cells",34,108887
+"donor_x_condition_x_cell_type","D101|stim|FCGR3A+ Monocytes","D101","stim","FCGR3A+ Monocytes",144,400426
+"donor_x_condition_x_cell_type","D101|stim|NK cells","D101","stim","NK cells",104,97287
+"donor_x_condition_x_cell_type","D1015|ctrl|B cells","D1015","ctrl","B cells",453,552545
+"donor_x_condition_x_cell_type","D1015|ctrl|CD14+ Monocytes","D1015","ctrl","CD14+ Monocytes",779,1685517
+"donor_x_condition_x_cell_type","D1015|ctrl|CD4 T cells","D1015","ctrl","CD4 T cells",848,999197
+"donor_x_condition_x_cell_type","D1015|ctrl|CD8 T cells","D1015","ctrl","CD8 T cells",179,194603
+"donor_x_condition_x_cell_type","D1015|ctrl|Dendritic cells","D1015","ctrl","Dendritic cells",30,102176
+"donor_x_condition_x_cell_type","D1015|ctrl|FCGR3A+ Monocytes","D1015","ctrl","FCGR3A+ Monocytes",252,584234
+"donor_x_condition_x_cell_type","D1015|ctrl|Megakaryocytes","D1015","ctrl","Megakaryocytes",20,32920
+"donor_x_condition_x_cell_type","D1015|ctrl|NK cells","D1015","ctrl","NK cells",177,173648
+"donor_x_condition_x_cell_type","D1015|stim|B cells","D1015","stim","B cells",341,436755
+"donor_x_condition_x_cell_type","D1015|stim|CD14+ Monocytes","D1015","stim","CD14+ Monocytes",671,1681881
+"donor_x_condition_x_cell_type","D1015|stim|CD4 T cells","D1015","stim","CD4 T cells",734,917920
+"donor_x_condition_x_cell_type","D1015|stim|CD8 T cells","D1015","stim","CD8 T cells",133,162740
+"donor_x_condition_x_cell_type","D1015|stim|Dendritic cells","D1015","stim","Dendritic cells",30,111360
+"donor_x_condition_x_cell_type","D1015|stim|FCGR3A+ Monocytes","D1015","stim","FCGR3A+ Monocytes",228,581217
+"donor_x_condition_x_cell_type","D1015|stim|Megakaryocytes","D1015","stim","Megakaryocytes",20,36035
+"donor_x_condition_x_cell_type","D1015|stim|NK cells","D1015","stim","NK cells",195,218863
+"donor_x_condition_x_cell_type","D1016|ctrl|B cells","D1016","ctrl","B cells",126,155845
+"donor_x_condition_x_cell_type","D1016|ctrl|CD14+ Monocytes","D1016","ctrl","CD14+ Monocytes",369,721958
+"donor_x_condition_x_cell_type","D1016|ctrl|CD4 T cells","D1016","ctrl","CD4 T cells",422,448852
+"donor_x_condition_x_cell_type","D1016|ctrl|CD8 T cells","D1016","ctrl","CD8 T cells",536,493454
+"donor_x_condition_x_cell_type","D1016|ctrl|FCGR3A+ Monocytes","D1016","ctrl","FCGR3A+ Monocytes",115,260162
+"donor_x_condition_x_cell_type","D1016|ctrl|NK cells","D1016","ctrl","NK cells",128,111460
+"donor_x_condition_x_cell_type","D1016|stim|B cells","D1016","stim","B cells",116,140347
+"donor_x_condition_x_cell_type","D1016|stim|CD14+ Monocytes","D1016","stim","CD14+ Monocytes",329,707388
+"donor_x_condition_x_cell_type","D1016|stim|CD4 T cells","D1016","stim","CD4 T cells",353,398977
+"donor_x_condition_x_cell_type","D1016|stim|CD8 T cells","D1016","stim","CD8 T cells",489,488297
+"donor_x_condition_x_cell_type","D1016|stim|FCGR3A+ Monocytes","D1016","stim","FCGR3A+ Monocytes",128,304667
+"donor_x_condition_x_cell_type","D1016|stim|NK cells","D1016","stim","NK cells",195,188181
+"donor_x_condition_x_cell_type","D1039|ctrl|B cells","D1039","ctrl","B cells",26,35017
+"donor_x_condition_x_cell_type","D1039|ctrl|CD14+ Monocytes","D1039","ctrl","CD14+ Monocytes",112,270440
+"donor_x_condition_x_cell_type","D1039|ctrl|CD4 T cells","D1039","ctrl","CD4 T cells",182,227173
+"donor_x_condition_x_cell_type","D1039|ctrl|CD8 T cells","D1039","ctrl","CD8 T cells",26,24971
+"donor_x_condition_x_cell_type","D1039|ctrl|FCGR3A+ Monocytes","D1039","ctrl","FCGR3A+ Monocytes",31,93637
+"donor_x_condition_x_cell_type","D1039|stim|B cells","D1039","stim","B cells",39,64868
+"donor_x_condition_x_cell_type","D1039|stim|CD14+ Monocytes","D1039","stim","CD14+ Monocytes",150,422461
+"donor_x_condition_x_cell_type","D1039|stim|CD4 T cells","D1039","stim","CD4 T cells",272,343800
+"donor_x_condition_x_cell_type","D1039|stim|CD8 T cells","D1039","stim","CD8 T cells",29,31103
+"donor_x_condition_x_cell_type","D1039|stim|FCGR3A+ Monocytes","D1039","stim","FCGR3A+ Monocytes",43,135774
+"donor_x_condition_x_cell_type","D1039|stim|NK cells","D1039","stim","NK cells",23,25270
+"donor_x_condition_x_cell_type","D107|ctrl|B cells","D107","ctrl","B cells",44,52658
+"donor_x_condition_x_cell_type","D107|ctrl|CD14+ Monocytes","D107","ctrl","CD14+ Monocytes",209,469563
+"donor_x_condition_x_cell_type","D107|ctrl|CD4 T cells","D107","ctrl","CD4 T cells",158,192128
+"donor_x_condition_x_cell_type","D107|ctrl|CD8 T cells","D107","ctrl","CD8 T cells",20,19387
+"donor_x_condition_x_cell_type","D107|ctrl|FCGR3A+ Monocytes","D107","ctrl","FCGR3A+ Monocytes",32,82383
+"donor_x_condition_x_cell_type","D107|ctrl|NK cells","D107","ctrl","NK cells",40,36082
+"donor_x_condition_x_cell_type","D107|stim|B cells","D107","stim","B cells",54,72374
+"donor_x_condition_x_cell_type","D107|stim|CD14+ Monocytes","D107","stim","CD14+ Monocytes",169,436403
+"donor_x_condition_x_cell_type","D107|stim|CD4 T cells","D107","stim","CD4 T cells",186,233678
+"donor_x_condition_x_cell_type","D107|stim|FCGR3A+ Monocytes","D107","stim","FCGR3A+ Monocytes",37,96428
+"donor_x_condition_x_cell_type","D107|stim|NK cells","D107","stim","NK cells",46,46083
+"donor_x_condition_x_cell_type","D1244|ctrl|B cells","D1244","ctrl","B cells",116,157830
+"donor_x_condition_x_cell_type","D1244|ctrl|CD14+ Monocytes","D1244","ctrl","CD14+ Monocytes",415,970635
+"donor_x_condition_x_cell_type","D1244|ctrl|CD4 T cells","D1244","ctrl","CD4 T cells",1068,1297945
+"donor_x_condition_x_cell_type","D1244|ctrl|CD8 T cells","D1244","ctrl","CD8 T cells",58,65738
+"donor_x_condition_x_cell_type","D1244|ctrl|Dendritic cells","D1244","ctrl","Dendritic cells",47,153631
+"donor_x_condition_x_cell_type","D1244|ctrl|FCGR3A+ Monocytes","D1244","ctrl","FCGR3A+ Monocytes",56,153192
+"donor_x_condition_x_cell_type","D1244|ctrl|NK cells","D1244","ctrl","NK cells",105,97323
+"donor_x_condition_x_cell_type","D1244|stim|B cells","D1244","stim","B cells",93,127309
+"donor_x_condition_x_cell_type","D1244|stim|CD14+ Monocytes","D1244","stim","CD14+ Monocytes",290,720532
+"donor_x_condition_x_cell_type","D1244|stim|CD4 T cells","D1244","stim","CD4 T cells",854,1150073
+"donor_x_condition_x_cell_type","D1244|stim|CD8 T cells","D1244","stim","CD8 T cells",32,37891
+"donor_x_condition_x_cell_type","D1244|stim|Dendritic cells","D1244","stim","Dendritic cells",33,114092
+"donor_x_condition_x_cell_type","D1244|stim|FCGR3A+ Monocytes","D1244","stim","FCGR3A+ Monocytes",35,105525
+"donor_x_condition_x_cell_type","D1244|stim|NK cells","D1244","stim","NK cells",114,114322
+"donor_x_condition_x_cell_type","D1256|ctrl|B cells","D1256","ctrl","B cells",216,259126
+"donor_x_condition_x_cell_type","D1256|ctrl|CD14+ Monocytes","D1256","ctrl","CD14+ Monocytes",390,987097
+"donor_x_condition_x_cell_type","D1256|ctrl|CD4 T cells","D1256","ctrl","CD4 T cells",1001,1222019
+"donor_x_condition_x_cell_type","D1256|ctrl|CD8 T cells","D1256","ctrl","CD8 T cells",131,134349
+"donor_x_condition_x_cell_type","D1256|ctrl|Dendritic cells","D1256","ctrl","Dendritic cells",26,91672
+"donor_x_condition_x_cell_type","D1256|ctrl|FCGR3A+ Monocytes","D1256","ctrl","FCGR3A+ Monocytes",69,202379
+"donor_x_condition_x_cell_type","D1256|ctrl|NK cells","D1256","ctrl","NK cells",261,227616
+"donor_x_condition_x_cell_type","D1256|stim|B cells","D1256","stim","B cells",208,265414
+"donor_x_condition_x_cell_type","D1256|stim|CD14+ Monocytes","D1256","stim","CD14+ Monocytes",375,988999
+"donor_x_condition_x_cell_type","D1256|stim|CD4 T cells","D1256","stim","CD4 T cells",954,1218071
+"donor_x_condition_x_cell_type","D1256|stim|CD8 T cells","D1256","stim","CD8 T cells",112,122223
+"donor_x_condition_x_cell_type","D1256|stim|Dendritic cells","D1256","stim","Dendritic cells",32,87568
+"donor_x_condition_x_cell_type","D1256|stim|FCGR3A+ Monocytes","D1256","stim","FCGR3A+ Monocytes",97,296259
+"donor_x_condition_x_cell_type","D1256|stim|NK cells","D1256","stim","NK cells",231,222091
+"donor_x_condition_x_cell_type","D1488|ctrl|B cells","D1488","ctrl","B cells",218,288109
+"donor_x_condition_x_cell_type","D1488|ctrl|CD14+ Monocytes","D1488","ctrl","CD14+ Monocytes",294,525799
+"donor_x_condition_x_cell_type","D1488|ctrl|CD4 T cells","D1488","ctrl","CD4 T cells",1182,1389400
+"donor_x_condition_x_cell_type","D1488|ctrl|CD8 T cells","D1488","ctrl","CD8 T cells",58,62119
+"donor_x_condition_x_cell_type","D1488|ctrl|Dendritic cells","D1488","ctrl","Dendritic cells",43,144430
+"donor_x_condition_x_cell_type","D1488|ctrl|FCGR3A+ Monocytes","D1488","ctrl","FCGR3A+ Monocytes",101,240690
+"donor_x_condition_x_cell_type","D1488|ctrl|NK cells","D1488","ctrl","NK cells",116,97846
+"donor_x_condition_x_cell_type","D1488|stim|B cells","D1488","stim","B cells",279,383162
+"donor_x_condition_x_cell_type","D1488|stim|CD14+ Monocytes","D1488","stim","CD14+ Monocytes",348,735512
+"donor_x_condition_x_cell_type","D1488|stim|CD4 T cells","D1488","stim","CD4 T cells",1484,1880208
+"donor_x_condition_x_cell_type","D1488|stim|CD8 T cells","D1488","stim","CD8 T cells",43,53700
+"donor_x_condition_x_cell_type","D1488|stim|Dendritic cells","D1488","stim","Dendritic cells",54,176403
+"donor_x_condition_x_cell_type","D1488|stim|FCGR3A+ Monocytes","D1488","stim","FCGR3A+ Monocytes",144,342407
+"donor_x_condition_x_cell_type","D1488|stim|Megakaryocytes","D1488","stim","Megakaryocytes",29,39426
+"donor_x_condition_x_cell_type","D1488|stim|NK cells","D1488","stim","NK cells",168,157868

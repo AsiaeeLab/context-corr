@@ -1,0 +1,8 @@
+"row_id","rule","description","n_domain","n_determinate","n_reversal","n_concordant","n_undetermined","frac_reversal_of_determinate","frac_reversal_of_domain","frac_reversal_of_baseline_eligible"
+"R01","i_baseline_majority_eps0.05","sign(sum_c s_c), s_c from eps = 0.05 (paper definition)",249596,243648,32321,211327,5948,0.132654485158918,0.129493261109954,0.132654485158918
+"R02","ii_precision_weighted_vote","sign(sum_c (N_c - 3) s_c), s_c from eps = 0.05",249596,249571,38194,211377,25,0.153038614262074,0.153023285629577,0.156758930916732
+"R03","iii_random_effects_direction","sign(r_RE) from DerSimonian-Laird pooling of Fisher z",249596,249596,31820,217776,0,0.127486017404125,0.127486017404125,0.130598240084056
+"R04","iv_CI_gated_majority","s_c = sign(r_c) only if |z_c| > 1.96/sqrt(N_c - 3); then majority",249596,241419,30228,211191,8177,0.12520969766257,0.121107710059456,0.124064223798266
+"R05","v_bootstrap_stable_majority","baseline label kept only if the majority sign is unchanged in >= 90% of 200 sample-level bootstrap replicates; else undetermined",249596,198644,15677,182967,50952,0.0789200781297195,0.062809500152246,0.0643428224323614
+"R06","nominal_p_gated_majority","s_c (eps = 0.05) counts only if the Fisher-z p_c < 0.05 (two-sided); then majority",249596,241418,30228,211190,8178,0.125210216305329,0.121107710059456,0.124064223798266
+"R07","BH_q_gated_majority","s_c (eps = 0.05) counts only if the per-cohort BH q_c < 0.05 (BH across all measurable high-variance pairs within the cohort); then majority",249596,239659,30034,209625,9937,0.125319725109426,0.120330454013686,0.123267993170475

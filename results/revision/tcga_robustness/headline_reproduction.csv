@@ -1,0 +1,9 @@
+"row_id","quantity","paper_value","recomputed_value","paper_source","abs_diff"
+"H01","simpson_reversal_rate_rg_ge_0.2_eps_0.05",0.132654485158918,0.132654485158918,"results/robustness_signflip_summary.csv (eps=0.05, threshold=0.2)",2.22044604925031e-16
+"H02","n_eligible_simpson_rg_ge_0.2",243648,243648,"results/robustness_signflip_summary.csv (eps=0.05, threshold=0.2)",0
+"H03","mixed_sign_rate_maxabs_ge_0.2_eps_0.05",0.994761054696677,0.994761054696677,"results/robustness_signflip_summary.csv (eps=0.05, threshold=0.2)",3.33066907387547e-16
+"H04","n_eligible_mixed_maxabs_ge_0.2",996002,996002,"results/robustness_signflip_summary.csv (eps=0.05, threshold=0.2)",0
+"H05","median_I2",0.863514331558806,0.863514331558806,"results/heterogeneity_summary.csv (group 'all (k>=10)')",3.33066907387547e-16
+"H06","I2_q25",0.801878250954018,0.801878250954018,"results/heterogeneity_summary.csv (group 'all (k>=10)')",3.33066907387547e-16
+"H07","I2_q75",0.904405468934272,0.904405468934272,"results/heterogeneity_summary.csv (group 'all (k>=10)')",4.44089209850063e-16
+"H08","frac_pairs_Q_fdr_lt_0.05",0.994638,0.994638,"results/heterogeneity_summary.csv (group 'all (k>=10)')",0

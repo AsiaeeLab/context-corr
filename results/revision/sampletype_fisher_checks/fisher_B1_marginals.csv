@@ -1,0 +1,5 @@
+"quantity","p10","p25","p50","p75","p90","pct_cells_zero_fraction_ge_0.5","pct_cells_zero_fraction_ge_0.2","pct_cells_abs_excess_kurtosis_gt_2"
+"miRNA zero fraction within cohort (feature-cohort cells)",0,0,0,0.0495951417004049,0.40336192708857,8.11290322580645,14.9032258064516,NA
+"mRNA zero-count fraction within cohort (feature-cohort cells)",0,0,0,0.0352733686067019,0.296703296703297,5.9258064516129,12.9877419354839,NA
+"miRNA excess kurtosis within cohort (nonzero-variance cells)",-0.582974871767863,-0.12870073754759,0.575591812613378,2.5701051833465,9.0412110809399,NA,NA,29.4251012145749
+"mRNA excess kurtosis within cohort (nonzero-variance cells)",-0.671017756477731,-0.251609694339144,0.521959483859863,3.06407489646691,13.6052415282155,NA,NA,30.7497708997509

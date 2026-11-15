@@ -1,2 +1,2 @@
-"G","M","domain_pairs","min_n_per_cohort","min_k","eps","thr_abs_global","cor_pearson_vs_spearman","simpson_reversal_rate_spearman","eligible_pairs"
-1000,50,50000,20,10,0.05,0.2,0.938198415290408,0.126237623762376,15756
+"G","M","domain_pairs","min_n_per_cohort","min_k","eps","thr_abs_global","cor_pooled_pearson_vs_spearman","mean_cor_within_cohort_pearson_vs_spearman","simpson_reversal_rate_pearson","reversal_pairs_pearson","eligible_pairs_pearson","simpson_reversal_rate_spearman","reversal_pairs_spearman","eligible_pairs_spearman"
+1000,50,50000,20,10,0.05,0.2,0.938198415290408,0.906625790773563,0.145322044796914,2712,18662,0.126237623762376,1989,15756

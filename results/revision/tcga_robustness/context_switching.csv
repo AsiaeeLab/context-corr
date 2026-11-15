@@ -1,0 +1,9 @@
+"row_id","criterion","n_pairs","denominator","fraction"
+"C01","r_max >= 0.3 and r_min <= -0.3 (no significance requirement)",457103,1000000,0.457103
+"C02","both extremes nominally significant (Fisher-z p < 0.05)",457103,1000000,0.457103
+"C03","both extremes significant after BH within pair (q < 0.05 across that pair's measurable cohorts)",433513,1000000,0.433513
+"C04","both extremes significant after per-cohort BH across pairs (q < 0.05)",402876,1000000,0.402876
+"C05","nominal criterion, among baseline Simpson reversals (|r_global| >= 0.2)",19367,32321,0.599207945298722
+"C06","within-pair-BH criterion, among baseline Simpson reversals (|r_global| >= 0.2)",18483,32321,0.571857306395223
+"C07","nominal criterion, among pairs eligible for the reversal rate (|r_global| >= 0.2)",107825,243648,0.442544162069871
+"C08","within-pair-BH criterion, among pairs eligible for the reversal rate (|r_global| >= 0.2)",103598,243648,0.42519536380352

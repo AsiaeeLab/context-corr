@@ -1,29 +1,21 @@
-###############################
-### Find the "home" directory.
-home <- Sys.getenv("HOME", unset = NA)
-if (is.na(home)) {
-  if(.Platform$OS.type == "windows") {
-    home <- paste(Sys.getenv("HOMEDRIVE"),
-                  Sys.getenv("HOMEPATH"), sep = "")
-    if (!file.exists(home)) home <- NA
+# Load dataset paths. Set CONTEXT_PATHS to a JSON file, or use the default
+# ~/Paths/context.json. See data/context-paths.example.json.
+context_config_file <- Sys.getenv("CONTEXT_PATHS", unset = path.expand("~/Paths/context.json"))
+if (!file.exists(context_config_file)) {
+  stop("Path configuration not found: ", context_config_file,
+       ". Copy data/context-paths.example.json, edit it, and set CONTEXT_PATHS.", call. = FALSE)
+}
+if (!requireNamespace("rjson", quietly = TRUE)) {
+  stop("Install the configuration reader with install.packages('rjson').", call. = FALSE)
+}
+paths <- rjson::fromJSON(file = context_config_file)$paths
+if (!is.list(paths) || !all(c("mirtcga", "scratch", "results") %in% names(paths))) {
+  stop("The configuration must contain paths.mirtcga, paths.scratch and paths.results.", call. = FALSE)
+}
+for (context_path_key in c("mirtcga", "scratch", "results")) {
+  if (!is.character(paths[[context_path_key]]) || length(paths[[context_path_key]]) != 1L ||
+      is.na(paths[[context_path_key]]) || !nzchar(paths[[context_path_key]])) {
+    stop("Invalid path configuration value: ", context_path_key, call. = FALSE)
   }
 }
-if (is.na(home)) stop("Cannot find 'HOME' from environment variables.")
-
-### Make sure there is a "Paths" subdirectory.
-pathsdir <- file.path(home, "Paths")
-if (!file.exists(pathsdir)) {
-  stop("There is no 'Paths' folder inside '", home, "'\n",
-       "Please create one.\n")
-}
-
-### Read the local JSON file.
-jinfo <- file.path(home, "Paths", "context.json")
-if (!file.exists(jinfo)) stop("Cannot locate file: '", jinfo, "'.\n", sep='')
-library(rjson)
-temp <- fromJSON(file = jinfo)
-paths <- temp$paths
-
-### Delete any temporary objects, just leving "paths".
-rm(home, pathsdir, jinfo, temp)
-
+rm(context_config_file, context_path_key)
